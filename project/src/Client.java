@@ -72,7 +72,7 @@ public class Client extends JFrame {
      * file names for the images
      */
     private static final String[] names = {
-            "oldCap.png", //https://www.uiowa.edu
+            "Clue.png",
             "amogusbackground.gif",
             "hansgiffinal.gif",
             "christmas.png", //https://newevolutiondesigns.com/images/freebies/4k-christmas-wallpaper-2.jpg
@@ -509,8 +509,8 @@ public class Client extends JFrame {
         chooseName.setVisible(true);
         textField.setVisible(false);
         enterName.setVisible(false);
-        gameLogo.setVisible(true);
-        gameLogo.setVisible(true);
+        gameLogo.setVisible(false);
+        gameLogo.setVisible(false);
         display.setVisible(true);
     }
 
