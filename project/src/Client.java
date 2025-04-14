@@ -47,6 +47,7 @@ public class Client extends JFrame {
     private final JButton skinsButton;
     private final JButton chooseName;
     private final JButton displayRules;
+    private JScrollPane scrollPane;
 
 
     private final JLabel scrambleForCurrentRoundLabel;
@@ -107,6 +108,7 @@ public class Client extends JFrame {
         // GUI setup
         setLayout(null);
 
+
         backToMainMenuFromSkinsButton = new JButton();
         exitFromGameToMainMenuButton = new JButton();
         continueToNextRoundButton = new JButton();
@@ -129,12 +131,22 @@ public class Client extends JFrame {
         textField = new JTextField();
 
         textField.setEditable(true);
-        //setup for rules
+
+
         URL rulesURL = getClass().getResource("rules.png");
         if (rulesURL != null) {
             ImageIcon rule = new ImageIcon(rulesURL);
             rules = new JLabel(rule);
+            scrollPane = new JScrollPane(rules);
+            scrollPane.setBounds(0, 0, 800, 600);
+            scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            scrollPane.setVisible(false); // hide it by default
+
+
+
         }
+
 
         // setup for game logo
         URL gameLogoURL = getClass().getResource("gamelogo in game context.png");
@@ -236,11 +248,12 @@ public class Client extends JFrame {
             chooseName.setVisible(true);
             display.setVisible(true);
             displayRules.setVisible(true);
-            rules.setVisible(false);
+            if (scrollPane != null) scrollPane.setVisible(false);
             mainMenuInitialize();
         });
 
         displayRules.addActionListener(e ->{
+            hideAllScreens();
             menu.setVisible(false);
             backToMainMenuFromSkinsButton.setVisible(true);
             exitTheApplicationButton.setVisible(false);
@@ -250,8 +263,25 @@ public class Client extends JFrame {
             chooseName.setVisible(false);
             displayRules.setVisible(false);
             rules.setVisible(true);
+
+            if (rules != null && rules.getIcon() instanceof ImageIcon imageIcon) {
+                int imageWidth = imageIcon.getIconWidth();
+                int imageHeight = imageIcon.getIconHeight();
+
+                int extraWidth = 10;
+                int extraHeight = 20;
+
+                setSize(820, 640);
+                setLocationRelativeTo(null); // Center the window
+            }
+
+
+            scrollPane.setVisible(true);
             backToMainMenuFromSkinsButton.setBounds(600, 450, 150, 50);
+
         });
+
+
 
         joinTheTournamentButton.addActionListener(e -> {
             if (clientRound >= 5) {
@@ -487,7 +517,8 @@ public class Client extends JFrame {
      * has buttons to exit, play the game, and change skin
      */
     private void mainMenuInitialize() {
-        rules.setVisible(false);
+//        rules.setVisible(false);
+        scrollPane.setVisible(false);
         displayRules.setVisible(true);
         menu.setVisible(true);
         backToMainMenuFromSkinsButton.setVisible(false);
@@ -512,13 +543,14 @@ public class Client extends JFrame {
         gameLogo.setVisible(false);
         gameLogo.setVisible(false);
         display.setVisible(true);
+        if (scrollPane != null) scrollPane.setVisible(false);
     }
 
     /**
      * adds all the necessary components, helper method
      */
     private void addJFrameComponents() {
-        add(rules);
+//        add(rules);
         add(displayRules);
         add(displayLeaderboard);
         add(gameLogo);
@@ -542,13 +574,18 @@ public class Client extends JFrame {
         add(gameBackgroundLabel);
         add(menu);
         add(display);
+
+        if (scrollPane != null) {
+            add(scrollPane); // must be last to control visibility correctly
+        }
+
     }
 
     /**
      * sets the bounds for all the needed button on the menu
      */
     private void initiateBounds() {
-        rules.setBounds(0,0,800,600);
+//        rules.setBounds(0,0,800,600);
         menu.setBounds(-10, -50, 800, 600);
         backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
         scrambleForCurrentRoundLabel.setBounds(50, 225, 750, 60);
@@ -627,5 +664,14 @@ public class Client extends JFrame {
         } catch (UnsupportedAudioFileException | URISyntaxException | LineUnavailableException | IOException ex) {
             System.out.println("Audio is not working");
         }
+    }
+
+    private void hideAllScreens() {
+        menu.setVisible(false);
+        gameBackgroundLabel.setVisible(false);
+        display.setVisible(false);
+//        rules.setVisible(false); // just in case
+        if (scrollPane != null) scrollPane.setVisible(false);
+        gameLogo.setVisible(false);
     }
 }
