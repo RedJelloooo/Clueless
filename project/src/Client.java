@@ -160,34 +160,11 @@ public class Client extends JFrame {
         testMoveButton.addActionListener(e -> sendData("MOVE 1 1"));
         whereAmIButton.addActionListener(e -> sendData("WHERE"));
 
-//        boardPanel = new JPanel(new GridLayout(3, 3));
-//        roomLabels = new JLabel[3][3];
-//
-//
-//
-//
-//        String[][] roomNames = {
-//                {"Study", "Hall", "Lounge"},
-//                {"Library", "Billiard", "Dining"},
-//                {"Conservatory", "Ballroom", "Kitchen"}
-//        };
-//
-//        for (int row = 0; row < 3; row++) {
-//            for (int col = 0; col < 3; col++) {
-//                roomLabels[row][col] = new JLabel(roomNames[row][col], SwingConstants.CENTER);
-//                roomLabels[row][col].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-//                boardPanel.add(roomLabels[row][col]);
-//            }
-//        }
-//
-//        boardPanel.setBounds(50, 50, 400, 400);
-//        add(boardPanel);
-//        boardPanel.setVisible(true);
 
-        //TODO
+
         boardLabels = new JLabel[BOARD_SIZE][BOARD_SIZE];
         JPanel boardPanel = new JPanel(new GridLayout(BOARD_SIZE, BOARD_SIZE));
-        boardPanel.setBounds(50, 50, 400, 400); // adjust size as needed
+        boardPanel.setBounds(150, 55, 400, 400); // adjust size as needed
 
         String[][] roomGridNames = {
                 {"Study", "", "Hall", "", "Lounge"},
@@ -220,7 +197,6 @@ public class Client extends JFrame {
 
         add(boardPanel);
 
-        //TODO
 
 
 
@@ -377,7 +353,7 @@ public class Client extends JFrame {
                 int extraWidth = 10;
                 int extraHeight = 20;
 
-                setSize(820, 640);
+                setSize(820 + extraWidth, 640 + extraHeight); //820, 640
                 setLocationRelativeTo(null); // Center the window
             }
 
@@ -712,6 +688,7 @@ public class Client extends JFrame {
      * sets the bounds for all the needed button on the menu
      */
     private void initiateBounds() {
+
 //        rules.setBounds(0,0,800,600);
         menu.setBounds(-10, -50, 800, 600);
         backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
@@ -801,24 +778,8 @@ public class Client extends JFrame {
         if (scrollPane != null) scrollPane.setVisible(false);
         gameLogo.setVisible(false);
     }
-//    private void updateBoard(String playerName, int row, int col) {
-//        // Clear all player tags
-//        for (int r = 0; r < 3; r++) {
-//            for (int c = 0; c < 3; c++) {
-//                String text = roomLabels[r][c].getText();
-//                int idx = text.indexOf(" (");
-//                if (idx != -1) {
-//                    roomLabels[r][c].setText(text.substring(0, idx)); // Remove old player
-//                }
-//            }
-//        }
-//
-//        // Add player name to the correct room
-//        String base = roomLabels[row][col].getText();
-//        roomLabels[row][col].setText(base + " (" + playerName + ")");
-//    }
 
-    //TODO
+
     private void updateBoard(String playerName, int row, int col) {
         // Clear previous tags
         for (int r = 0; r < BOARD_SIZE; r++) {
@@ -834,12 +795,12 @@ public class Client extends JFrame {
         // Add player name to current room
         JLabel current = boardLabels[row][col];
 
-        // ✅ Prevent crash if it's a blank hallway or an uninitialized label
+        // Prevent crash if it's a blank hallway or an uninitialized label
         if (current == null || current.getText() == null || current.getText().isEmpty()) return;
 
         current.setText(current.getText() + " (" + playerName + ")");
 
     }
-    //TODO
+
 
 }
