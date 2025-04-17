@@ -148,12 +148,12 @@ public class Client extends JFrame {
         textField.setEditable(true);
 
         testMoveButton = new JButton("Move to (1,1)");
-        testMoveButton.setBounds(600, 240 + 70, 150, 25);
+        testMoveButton.setBounds(600, 304 + 70, 150, 25);
         testMoveButton.setVisible(true);
         add(testMoveButton);
 
         whereAmIButton = new JButton("Where Am I?");
-        whereAmIButton.setBounds(600, 240 + 105, 150, 25);
+        whereAmIButton.setBounds(600, 235 + 105, 150, 25);
         whereAmIButton.setVisible(true);
         add(whereAmIButton);
 
@@ -690,24 +690,24 @@ public class Client extends JFrame {
     private void initiateBounds() {
 
 //        rules.setBounds(0,0,800,600);
-        menu.setBounds(-10, -50, 800, 600);
+        menu.setBounds(-10, -50, 800, 600); //-10, -50, 800, 600
         backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
         scrambleForCurrentRoundLabel.setBounds(50, 225, 750, 60);
-        displayRules.setBounds(600,275,150,25);
+        displayRules.setBounds(600,499,150,25); //600,275,150,25
         exitFromGameToMainMenuButton.setBounds(600, 435, 150, 25);
-        exitTheApplicationButton.setBounds(600, 435, 150, 25);
-        joinTheTournamentButton.setBounds(600, 339, 150, 25);
+        exitTheApplicationButton.setBounds(600, 531, 150, 25); // 600, 435, 150, 25
+        joinTheTournamentButton.setBounds(600, 403, 150, 25);
         timeRemainingLabel.setBounds(50, 225, 700, 100);
         continueToNextRoundButton.setBounds(600,403,150,25);
         currentRoundLabel.setBounds(70, 310, 150, 50);
         gameBackgroundLabel.setBounds(0, 0, 800, 600);
         gameTimerLabel.setBounds(565, -10, 225, 150);
         imagesJComboBox.setBounds(600, 275, 150, 50);
-        displayLeaderboard.setBounds(600, 371, 150, 25);
+        displayLeaderboard.setBounds(600, 435, 150, 25);
         clientScoreLabel.setBounds(40, 340, 200, 50);
         enterName.setBounds(600, 275, 150, 50);
         textField.setBounds(250, 350, 400, 50);
-        skinsButton.setBounds(600, 403, 150, 25);
+        skinsButton.setBounds(600, 467, 150, 25);
         currentName.setBounds(600, 350, 150, 50);
         chooseName.setBounds(600, 307, 150, 25);
         gameLogo.setBounds(0, -100, 800, 800);
