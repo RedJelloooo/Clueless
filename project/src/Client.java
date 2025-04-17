@@ -41,6 +41,10 @@ public class Client extends JFrame {
     // GUI components
     private JPanel boardPanel;
     private JLabel[][] roomLabels;
+
+    private static final int BOARD_SIZE = 5;
+    private JLabel[][] boardLabels;
+
     private final JButton backToMainMenuFromSkinsButton;
     private final JButton exitFromGameToMainMenuButton;
     private final JButton continueToNextRoundButton;
@@ -156,26 +160,67 @@ public class Client extends JFrame {
         testMoveButton.addActionListener(e -> sendData("MOVE 1 1"));
         whereAmIButton.addActionListener(e -> sendData("WHERE"));
 
-        boardPanel = new JPanel(new GridLayout(3, 3));
-        roomLabels = new JLabel[3][3];
+//        boardPanel = new JPanel(new GridLayout(3, 3));
+//        roomLabels = new JLabel[3][3];
+//
+//
+//
+//
+//        String[][] roomNames = {
+//                {"Study", "Hall", "Lounge"},
+//                {"Library", "Billiard", "Dining"},
+//                {"Conservatory", "Ballroom", "Kitchen"}
+//        };
+//
+//        for (int row = 0; row < 3; row++) {
+//            for (int col = 0; col < 3; col++) {
+//                roomLabels[row][col] = new JLabel(roomNames[row][col], SwingConstants.CENTER);
+//                roomLabels[row][col].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+//                boardPanel.add(roomLabels[row][col]);
+//            }
+//        }
+//
+//        boardPanel.setBounds(50, 50, 400, 400);
+//        add(boardPanel);
+//        boardPanel.setVisible(true);
 
-        String[][] roomNames = {
-                {"Study", "Hall", "Lounge"},
-                {"Library", "Billiard", "Dining"},
-                {"Conservatory", "Ballroom", "Kitchen"}
+        //TODO
+        boardLabels = new JLabel[BOARD_SIZE][BOARD_SIZE];
+        JPanel boardPanel = new JPanel(new GridLayout(BOARD_SIZE, BOARD_SIZE));
+        boardPanel.setBounds(50, 50, 400, 400); // adjust size as needed
+
+        String[][] roomGridNames = {
+                {"Study", "", "Hall", "", "Lounge"},
+                {"", "", "", "", ""},
+                {"Library", "", "Billiard", "", "Dining"},
+                {"", "", "", "", ""},
+                {"Conservatory", "", "Ballroom", "", "Kitchen"}
         };
 
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                roomLabels[row][col] = new JLabel(roomNames[row][col], SwingConstants.CENTER);
-                roomLabels[row][col].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                boardPanel.add(roomLabels[row][col]);
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
+                String name = roomGridNames[row][col];
+                JLabel label;
+
+                if (name.equals("")) {
+                    label = new JLabel(); // Blank hallway square
+                } else {
+                    label = new JLabel(name, SwingConstants.CENTER);
+                    label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                }
+
+                label.setOpaque(true);
+
+                label.setBackground(name.equals("") ? Color.BLACK : Color.CYAN);
+
+                boardLabels[row][col] = label;
+                boardPanel.add(label);
             }
         }
 
-        boardPanel.setBounds(50, 50, 400, 400);
         add(boardPanel);
-        boardPanel.setVisible(true);
+
+        //TODO
 
 
 
@@ -205,6 +250,7 @@ public class Client extends JFrame {
         Icon[] icons = new Icon[names.length];
         for (int i = 0; i < names.length; i++) {
             URL image = getClass().getResource(names[i]);
+
             if (image != null) {
                 icons[i] = new ImageIcon(image);
             }
@@ -755,22 +801,45 @@ public class Client extends JFrame {
         if (scrollPane != null) scrollPane.setVisible(false);
         gameLogo.setVisible(false);
     }
+//    private void updateBoard(String playerName, int row, int col) {
+//        // Clear all player tags
+//        for (int r = 0; r < 3; r++) {
+//            for (int c = 0; c < 3; c++) {
+//                String text = roomLabels[r][c].getText();
+//                int idx = text.indexOf(" (");
+//                if (idx != -1) {
+//                    roomLabels[r][c].setText(text.substring(0, idx)); // Remove old player
+//                }
+//            }
+//        }
+//
+//        // Add player name to the correct room
+//        String base = roomLabels[row][col].getText();
+//        roomLabels[row][col].setText(base + " (" + playerName + ")");
+//    }
+
+    //TODO
     private void updateBoard(String playerName, int row, int col) {
-        // Clear all player tags
-        for (int r = 0; r < 3; r++) {
-            for (int c = 0; c < 3; c++) {
-                String text = roomLabels[r][c].getText();
-                int idx = text.indexOf(" (");
-                if (idx != -1) {
-                    roomLabels[r][c].setText(text.substring(0, idx)); // Remove old player
+        // Clear previous tags
+        for (int r = 0; r < BOARD_SIZE; r++) {
+            for (int c = 0; c < BOARD_SIZE; c++) {
+                JLabel label = boardLabels[r][c];
+                if (label != null && label.getText().contains("(")) {
+                    int idx = label.getText().indexOf(" (");
+                    label.setText(label.getText().substring(0, idx));
                 }
             }
         }
 
-        // Add player name to the correct room
-        String base = roomLabels[row][col].getText();
-        roomLabels[row][col].setText(base + " (" + playerName + ")");
-    }
+        // Add player name to current room
+        JLabel current = boardLabels[row][col];
 
+        // ✅ Prevent crash if it's a blank hallway or an uninitialized label
+        if (current == null || current.getText() == null || current.getText().isEmpty()) return;
+
+        current.setText(current.getText() + " (" + playerName + ")");
+
+    }
+    //TODO
 
 }
