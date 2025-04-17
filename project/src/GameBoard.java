@@ -2,7 +2,8 @@ import java.util.*;
 
 public class GameBoard {
 
-    public static final int SIZE = 3;
+    public static final int SIZE = 5;
+
 
     private final Room[][] rooms;
     private final Set<Hallway> hallways;
@@ -17,34 +18,41 @@ public class GameBoard {
     }
 
     private void initializeRooms() {
-        // Create 3x3 rooms with names for fun
         String[][] names = {
-                {"Study", "Hall", "Lounge"},
-                {"Library", "Billiard Room", "Dining Room"},
-                {"Conservatory", "Ballroom", "Kitchen"}
+                {"Study", "", "Hall", "", "Lounge"},
+                {"", "", "", "", ""},
+                {"Library", "", "Billiard Room", "", "Dining Room"},
+                {"", "", "", "", ""},
+                {"Conservatory", "", "Ballroom", "", "Kitchen"}
         };
 
         for (int row = 0; row < SIZE; row++) {
             for (int col = 0; col < SIZE; col++) {
-                rooms[row][col] = new Room(names[row][col], row, col);
+                String name = names[row][col];
+                if (!name.equals("")) {
+                    rooms[row][col] = new Room(name, row, col);
+                }
             }
         }
     }
 
+
     private void initializeHallways() {
-        // Horizontal hallways
-        for (int row = 0; row < SIZE; row++) {
-            for (int col = 0; col < SIZE - 1; col++) {
-                hallways.add(new Hallway(row, col, row, col + 1));
-            }
-        }
-        // Vertical hallways
-        for (int col = 0; col < SIZE; col++) {
-            for (int row = 0; row < SIZE - 1; row++) {
-                hallways.add(new Hallway(row, col, row + 1, col));
+        for (int row = 0; row < SIZE; row += 2) {
+            for (int col = 0; col < SIZE; col += 2) {
+                // Horizontal hallway: check right neighbor
+                if (col + 2 < SIZE && rooms[row][col] != null && rooms[row][col + 2] != null) {
+                    hallways.add(new Hallway(row, col, row, col + 2));
+                }
+
+                // Vertical hallway: check bottom neighbor
+                if (row + 2 < SIZE && rooms[row][col] != null && rooms[row + 2][col] != null) {
+                    hallways.add(new Hallway(row, col, row + 2, col));
+                }
             }
         }
     }
+
 
     public boolean addPlayer(String playerId, String characterName, int row, int col) {
         if (rooms[row][col].isOccupied()) return false;
@@ -86,11 +94,18 @@ public class GameBoard {
     public void printBoardDebug() {
         for (int r = 0; r < SIZE; r++) {
             for (int c = 0; c < SIZE; c++) {
-                Room room = rooms[r][c];
-                String occupant = room.isOccupied() ? "X" : " ";
-                System.out.print("[" + room.getName().charAt(0) + occupant + "]");
+                if (rooms[r][c] != null) {
+                    String occupant = rooms[r][c].isOccupied() ? "X" : " ";
+                    System.out.print("[" + rooms[r][c].getName().charAt(0) + occupant + "]");
+                } else {
+                    System.out.print("[  ]");
+                }
             }
             System.out.println();
         }
     }
 }
+
+
+
+
