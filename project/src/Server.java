@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
  */
 public class Server extends JFrame {
 
+    private final GameBoard gameBoard = new GameBoard();
     private int playerCount = 0;
     private final static int MAX_PLAYERS = 16; //can possibly get rid of this
     private final JTextArea displayArea;
@@ -149,6 +150,37 @@ public class Server extends JFrame {
                     displayMessage("\n" + clientCommand);
 
                     // for the server to track how many players we have
+                    if (clientCommand.startsWith("JOIN")) {
+                        String characterName = clientCommand.split(" ")[1];
+                        // You can assign a default start location — let’s say top left corner
+                        boolean added = gameBoard.addPlayer(characterName, characterName, 0, 0);
+                        if (added) {
+                            output.writeObject("JOINED " + characterName);
+                        } else {
+                            output.writeObject("FAILED JOIN");
+                        }
+                        output.flush();
+                    }
+
+                    if (clientCommand.startsWith("MOVE")) {
+                        String[] parts = clientCommand.split(" ");
+                        int targetRow = Integer.parseInt(parts[1]);
+                        int targetCol = Integer.parseInt(parts[2]);
+
+                        boolean moved = gameBoard.movePlayer("MissScarlet", targetRow, targetCol); // hardcoded for now
+                        output.writeObject("MOVED " + moved);
+                        output.flush();
+                    }
+                    gameBoard.printBoardDebug(); // to debug
+
+                    if (clientCommand.equals("WHERE")) {
+                        Room room = gameBoard.getRoom("MissScarlet");
+                        output.writeObject("LOCATION " + room.getName() + " [" + room.getRow() + "," + room.getCol() + "]");
+                        output.flush();
+                    }
+
+
+
                     if (clientCommand.equals(Commands.PLAYER_JOINED.toString())) {
                         playerCount++;
                         displayMessage("\n" + playerCount + " players in the game.");

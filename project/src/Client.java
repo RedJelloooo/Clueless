@@ -36,8 +36,11 @@ public class Client extends JFrame {
     private final String chatServer;
     private final Set<String> wordsGuessed = new HashSet<>();
     private String message = "";
+    private JComboBox<String> characterDropdown;
 
     // GUI components
+    private JPanel boardPanel;
+    private JLabel[][] roomLabels;
     private final JButton backToMainMenuFromSkinsButton;
     private final JButton exitFromGameToMainMenuButton;
     private final JButton continueToNextRoundButton;
@@ -48,6 +51,8 @@ public class Client extends JFrame {
     private final JButton chooseName;
     private final JButton displayRules;
     private JScrollPane scrollPane;
+    private JButton testMoveButton;
+    private JButton whereAmIButton;
 
 
     private final JLabel scrambleForCurrentRoundLabel;
@@ -68,6 +73,12 @@ public class Client extends JFrame {
     private final JTextField textField;
 
     private String name = "Player";
+
+
+    private static final String[] characters = {
+            "MissScarlet", "ColonelMustard", "MrsWhite",
+            "MrGreen", "MrsPeacock", "ProfessorPlum"
+    };
 
     /**
      * file names for the images
@@ -132,6 +143,41 @@ public class Client extends JFrame {
 
         textField.setEditable(true);
 
+        testMoveButton = new JButton("Move to (1,1)");
+        testMoveButton.setBounds(600, 240 + 70, 150, 25);
+        testMoveButton.setVisible(true);
+        add(testMoveButton);
+
+        whereAmIButton = new JButton("Where Am I?");
+        whereAmIButton.setBounds(600, 240 + 105, 150, 25);
+        whereAmIButton.setVisible(true);
+        add(whereAmIButton);
+
+        testMoveButton.addActionListener(e -> sendData("MOVE 1 1"));
+        whereAmIButton.addActionListener(e -> sendData("WHERE"));
+
+        boardPanel = new JPanel(new GridLayout(3, 3));
+        roomLabels = new JLabel[3][3];
+
+        String[][] roomNames = {
+                {"Study", "Hall", "Lounge"},
+                {"Library", "Billiard", "Dining"},
+                {"Conservatory", "Ballroom", "Kitchen"}
+        };
+
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                roomLabels[row][col] = new JLabel(roomNames[row][col], SwingConstants.CENTER);
+                roomLabels[row][col].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                boardPanel.add(roomLabels[row][col]);
+            }
+        }
+
+        boardPanel.setBounds(50, 50, 400, 400);
+        add(boardPanel);
+        boardPanel.setVisible(true);
+
+
 
         URL rulesURL = getClass().getResource("rules.png");
         if (rulesURL != null) {
@@ -172,6 +218,20 @@ public class Client extends JFrame {
         imagesJComboBox = new JComboBox<>(names);
         imagesJComboBox.setMaximumRowCount(4); // display four rows
         display = new JLabel(icons[0]);
+
+        characterDropdown = new JComboBox<>(characters);
+        characterDropdown.setBounds(600, 240, 150, 25);
+        characterDropdown.setVisible(true);
+        add(characterDropdown);
+
+        JButton joinGameButton = new JButton("Join Game");
+        joinGameButton.setBounds(600, 240 + 35, 150, 25);
+        add(joinGameButton);
+
+        joinGameButton.addActionListener(e -> {
+            String selected = (String) characterDropdown.getSelectedItem();
+            sendData("JOIN " + selected);
+        });
 
         URL menuImage = getClass().getResource("menu.png");
         if (menuImage != null) {
@@ -375,9 +435,10 @@ public class Client extends JFrame {
             try {
                 if (haveScramble) {
                     message = (String) inputStream.readObject();
-                } else {
+                }else {
                     scrambles = (String[]) inputStream.readObject();
                     haveScramble = true;
+                    continue; // skip rest of loop, no message to process
                 }
 
                 if (!message.isEmpty() && message.charAt(0) == '!') {
@@ -392,6 +453,26 @@ public class Client extends JFrame {
                     application.setLocationRelativeTo(null);
                     application.setTitle("Leaderboard");
                     application.setVisible(true);
+                }
+
+                // ✨ NEW: Handle custom game messages from Clue-Less server
+                if (message.startsWith("LOCATION")) {
+                    // Format: "LOCATION Ballroom [2,2]"
+                    String[] parts = message.split(" ");
+                    String[] coords = parts[2].replace("[", "").replace("]", "").split(",");
+                    int row = Integer.parseInt(coords[0]);
+                    int col = Integer.parseInt(coords[1]);
+
+                    updateBoard(name, row, col);
+                    JOptionPane.showMessageDialog(this, message, "Location", JOptionPane.INFORMATION_MESSAGE);
+                }
+
+                if (message.startsWith("MOVED")) {
+                    JOptionPane.showMessageDialog(this, message, "Move Result", JOptionPane.INFORMATION_MESSAGE);
+                }
+
+                if (message.startsWith("JOINED") || message.startsWith("FAILED")) {
+                    JOptionPane.showMessageDialog(this, message, "Join Result", JOptionPane.INFORMATION_MESSAGE);
                 }
             } catch (ClassNotFoundException classNotFoundException) {
                 classNotFoundException.printStackTrace();
@@ -674,4 +755,22 @@ public class Client extends JFrame {
         if (scrollPane != null) scrollPane.setVisible(false);
         gameLogo.setVisible(false);
     }
+    private void updateBoard(String playerName, int row, int col) {
+        // Clear all player tags
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 3; c++) {
+                String text = roomLabels[r][c].getText();
+                int idx = text.indexOf(" (");
+                if (idx != -1) {
+                    roomLabels[r][c].setText(text.substring(0, idx)); // Remove old player
+                }
+            }
+        }
+
+        // Add player name to the correct room
+        String base = roomLabels[row][col].getText();
+        roomLabels[row][col].setText(base + " (" + playerName + ")");
+    }
+
+
 }
