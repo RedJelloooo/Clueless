@@ -20,11 +20,20 @@ public class Hallway {
         }
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Hallway other)) return false;
-        return row1 == other.row1 && col1 == other.col1 && row2 == other.row2 && col2 == other.col2;
+        boolean isEqual = row1 == other.row1 && col1 == other.col1 &&
+                row2 == other.row2 && col2 == other.col2;
+        if (!isEqual) {
+            System.out.printf("Hallway mismatch: [%d,%d -> %d,%d] vs [%d,%d -> %d,%d]%n",
+                    row1, col1, row2, col2,
+                    other.row1, other.col1, other.row2, other.col2);
+        }
+        return isEqual;
     }
+
 
     @Override
     public int hashCode() {

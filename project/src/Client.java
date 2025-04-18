@@ -55,7 +55,6 @@ public class Client extends JFrame {
     private final JButton chooseName;
     private final JButton displayRules;
     private JScrollPane scrollPane;
-    private JButton testMoveButton;
     private JButton whereAmIButton;
 
 
@@ -147,18 +146,53 @@ public class Client extends JFrame {
 
         textField.setEditable(true);
 
-        testMoveButton = new JButton("Move to (0 1)");
-        testMoveButton.setBounds(600, 304 + 70, 150, 25);
-        testMoveButton.setVisible(true);
-        add(testMoveButton);
-
         whereAmIButton = new JButton("Where Am I?");
-        whereAmIButton.setBounds(600, 235 + 105, 150, 25);
+        whereAmIButton.setBounds(600, 340, 150, 25);
         whereAmIButton.setVisible(true);
         add(whereAmIButton);
 
-        testMoveButton.addActionListener(e -> sendData("MOVE 0 1"));
-        whereAmIButton.addActionListener(e -> sendData("WHERE"));
+        JButton upButton = new JButton("Up");
+        upButton.setBounds(25, 400, 100, 25);
+        add(upButton);
+
+        JButton downButton = new JButton("Down");
+        downButton.setBounds(25, 430, 100, 25);
+        add(downButton);
+
+        JButton leftButton = new JButton("Left");
+        leftButton.setBounds(25, 460, 100, 25);
+        add(leftButton);
+
+        JButton rightButton = new JButton("Right");
+        rightButton.setBounds(25, 490, 100, 25);
+        add(rightButton);
+
+        System.out.println("Sending move command: MOVE_DIRECTION UP");
+
+
+        // Add Action Listeners
+        upButton.addActionListener(e -> {
+            System.out.println("Sending move command: MOVE_DIRECTION UP");
+            sendData("MOVE_DIRECTION UP");
+        });
+        downButton.addActionListener(e -> {
+            System.out.println("Sending move command: MOVE_DIRECTION DOWN");
+            sendData("MOVE_DIRECTION DOWN");
+        });
+        leftButton.addActionListener(e -> {
+            System.out.println("Sending move command: MOVE_DIRECTION LEFT");
+            sendData("MOVE_DIRECTION LEFT");
+        });
+        rightButton.addActionListener(e -> {
+            System.out.println("Sending move command: MOVE_DIRECTION RIGHT");
+            sendData("MOVE_DIRECTION RIGHT");
+        });
+
+        whereAmIButton.addActionListener(e -> {
+            System.out.println("Sending command: WHERE");
+            sendData("WHERE");
+        });
+
 
 
 
@@ -478,7 +512,7 @@ public class Client extends JFrame {
                     application.setVisible(true);
                 }
 
-                // ✨ NEW: Handle custom game messages from Clue-Less server
+                //  NEW: Handle custom game messages from Clue-Less server
                 if (message.startsWith("LOCATION")) {
                     // Format: "LOCATION Ballroom [2,2]"
                     String[] parts = message.split(" ");
@@ -490,9 +524,11 @@ public class Client extends JFrame {
                     JOptionPane.showMessageDialog(this, message, "Location", JOptionPane.INFORMATION_MESSAGE);
                 }
 
+
                 if (message.startsWith("MOVED")) {
                     JOptionPane.showMessageDialog(this, message, "Move Result", JOptionPane.INFORMATION_MESSAGE);
                 }
+
 
                 if (message.startsWith("JOINED") || message.startsWith("FAILED")) {
                     JOptionPane.showMessageDialog(this, message, "Join Result", JOptionPane.INFORMATION_MESSAGE);
@@ -690,25 +726,25 @@ public class Client extends JFrame {
      */
     private void initiateBounds() {
 
-//        rules.setBounds(0,0,800,600);
+
         menu.setBounds(-10, -50, 800, 600); //-10, -50, 800, 600
         backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
         scrambleForCurrentRoundLabel.setBounds(50, 225, 750, 60);
-        displayRules.setBounds(600,499,150,25); //600,275,150,25
+        displayRules.setBounds(600,404,150,25); //600,275,150,25
         exitFromGameToMainMenuButton.setBounds(600, 435, 150, 25);
-        exitTheApplicationButton.setBounds(600, 531, 150, 25); // 600, 435, 150, 25
-        joinTheTournamentButton.setBounds(600, 403, 150, 25);
+        exitTheApplicationButton.setBounds(600, 436, 150, 25); // 600, 435, 150, 25
+        joinTheTournamentButton.setBounds(600, 372, 150, 25);
         timeRemainingLabel.setBounds(50, 225, 700, 100);
         continueToNextRoundButton.setBounds(600,403,150,25);
         currentRoundLabel.setBounds(70, 310, 150, 50);
         gameBackgroundLabel.setBounds(0, 0, 800, 600);
         gameTimerLabel.setBounds(565, -10, 225, 150);
         imagesJComboBox.setBounds(600, 275, 150, 50);
-        displayLeaderboard.setBounds(600, 435, 150, 25);
+        displayLeaderboard.setBounds(600, 404, 150, 25);
         clientScoreLabel.setBounds(40, 340, 200, 50);
         enterName.setBounds(600, 275, 150, 50);
         textField.setBounds(250, 350, 400, 50);
-        skinsButton.setBounds(600, 467, 150, 25);
+//        skinsButton.setBounds(600, 467, 150, 25);
         currentName.setBounds(600, 350, 150, 50);
         chooseName.setBounds(600, 307, 150, 25);
         gameLogo.setBounds(0, -100, 800, 800);
@@ -775,7 +811,6 @@ public class Client extends JFrame {
         menu.setVisible(false);
         gameBackgroundLabel.setVisible(false);
         display.setVisible(false);
-//        rules.setVisible(false); // just in case
         if (scrollPane != null) scrollPane.setVisible(false);
         gameLogo.setVisible(false);
     }
@@ -803,7 +838,5 @@ public class Client extends JFrame {
 
         current.setText(baseText + " (" + playerName + ")");
     }
-
-
 
 }

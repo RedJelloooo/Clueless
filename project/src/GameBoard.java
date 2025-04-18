@@ -62,9 +62,6 @@ public class GameBoard {
         }
     }
 
-
-
-
     public boolean addPlayer(String playerId, String characterName, int row, int col) {
         if (rooms[row][col].isOccupied()) return false;
         PlayerState player = new PlayerState(playerId, characterName, row, col);
@@ -74,29 +71,43 @@ public class GameBoard {
     }
 
 
+    //TODO for debugging
     public boolean movePlayer(String playerId, int targetRow, int targetCol) {
         PlayerState player = playerPositions.get(playerId);
-        if (player == null) return false;
+        if (player == null) {
+            System.out.println("No player found with ID: " + playerId);
+            return false;
+        }
 
         int currentRow = player.getRow();
         int currentCol = player.getCol();
+        System.out.printf("Player at (%d,%d), attempting to move to (%d,%d)\n", currentRow, currentCol, targetRow, targetCol);
 
         Hallway attemptedPath = new Hallway(currentRow, currentCol, targetRow, targetCol);
         if (!hallways.contains(attemptedPath)) {
-            System.out.println("Invalid hallway connection: " + attemptedPath);
+            System.out.println("Invalid hallway: " + attemptedPath);
             return false;
         }
 
         Room targetRoom = rooms[targetRow][targetCol];
-        if (targetRoom == null || targetRoom.isOccupied()) return false;
+        if (targetRoom == null) {
+            System.out.println("Target room is null at: (" + targetRow + "," + targetCol + ")");
+            return false;
+        }
 
-        Room currentRoom = rooms[currentRow][currentCol];
-        if (currentRoom != null) currentRoom.setOccupied(false);
+        if (targetRoom.isOccupied()) {
+            System.out.println("Target room is occupied: " + targetRoom.getName());
+            return false;
+        }
 
+        rooms[currentRow][currentCol].setOccupied(false);
         targetRoom.setOccupied(true);
         player.setPosition(targetRow, targetCol);
+
+        System.out.println("Player moved successfully to: (" + targetRow + "," + targetCol + ")");
         return true;
     }
+
 
 
 
@@ -104,6 +115,10 @@ public class GameBoard {
         PlayerState player = playerPositions.get(playerId);
         return rooms[player.getRow()][player.getCol()];
     }
+    public PlayerState getPlayerState(String playerId) {
+        return playerPositions.get(playerId);
+    }
+
 
     public List<PlayerState> getAllPlayers() {
         return new ArrayList<>(playerPositions.values());
@@ -122,6 +137,54 @@ public class GameBoard {
             System.out.println();
         }
     }
+
+    public boolean canMove(String playerId, String direction) {
+        PlayerState player = playerPositions.get(playerId);
+        if (player == null) return false;
+
+        int row = player.getRow();
+        int col = player.getCol();
+        int newRow = row, newCol = col;
+
+        switch (direction) {
+            case "UP" -> newRow--;
+            case "DOWN" -> newRow++;
+            case "LEFT" -> newCol--;
+            case "RIGHT" -> newCol++;
+            default -> {
+                System.out.println("Invalid direction: " + direction);
+                return false;
+            }
+        }
+
+        // Check bounds
+        if (newRow < 0 || newRow >= SIZE || newCol < 0 || newCol >= SIZE) {
+            System.out.printf("Move out of bounds: (%d,%d)%n", newRow, newCol);
+            return false;
+        }
+
+        // Check if there's a room or hallway
+        if (rooms[newRow][newCol] == null) {
+            System.out.printf("No room at (%d,%d)%n", newRow, newCol);
+            return false;
+        }
+
+        // Check hallway connection
+        Hallway attemptedPath = new Hallway(row, col, newRow, newCol);
+        if (!hallways.contains(attemptedPath)) {
+            System.out.printf("No valid hallway between (%d,%d) and (%d,%d)%n", row, col, newRow, newCol);
+            return false;
+        }
+
+        // Check occupancy
+        if (rooms[newRow][newCol].isOccupied()) {
+            System.out.printf("Target square (%d,%d) is occupied%n", newRow, newCol);
+            return false;
+        }
+
+        return true;
+    }
+
 }
 
 
