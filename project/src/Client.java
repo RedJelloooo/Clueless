@@ -147,7 +147,7 @@ public class Client extends JFrame {
 
         textField.setEditable(true);
 
-        testMoveButton = new JButton("Move to (1,1)");
+        testMoveButton = new JButton("Move to (0 1)");
         testMoveButton.setBounds(600, 304 + 70, 150, 25);
         testMoveButton.setVisible(true);
         add(testMoveButton);
@@ -157,7 +157,7 @@ public class Client extends JFrame {
         whereAmIButton.setVisible(true);
         add(whereAmIButton);
 
-        testMoveButton.addActionListener(e -> sendData("MOVE 1 1"));
+        testMoveButton.addActionListener(e -> sendData("MOVE 0 1"));
         whereAmIButton.addActionListener(e -> sendData("WHERE"));
 
 
@@ -189,6 +189,7 @@ public class Client extends JFrame {
                 label.setOpaque(true);
 
                 label.setBackground(name.equals("") ? Color.BLACK : Color.CYAN);
+
 
                 boardLabels[row][col] = label;
                 boardPanel.add(label);
@@ -779,28 +780,30 @@ public class Client extends JFrame {
         gameLogo.setVisible(false);
     }
 
-
     private void updateBoard(String playerName, int row, int col) {
-        // Clear previous tags
+        // Clear all previous tags
         for (int r = 0; r < BOARD_SIZE; r++) {
             for (int c = 0; c < BOARD_SIZE; c++) {
                 JLabel label = boardLabels[r][c];
-                if (label != null && label.getText().contains("(")) {
+                if (label != null && label.getText() != null && label.getText().contains("(")) {
                     int idx = label.getText().indexOf(" (");
                     label.setText(label.getText().substring(0, idx));
                 }
             }
         }
 
-        // Add player name to current room
+        // Safely update any tile, including hallways
         JLabel current = boardLabels[row][col];
+        if (current == null) return;
 
-        // Prevent crash if it's a blank hallway or an uninitialized label
-        if (current == null || current.getText() == null || current.getText().isEmpty()) return;
+        String baseText = current.getText() == null ? "" : current.getText();
+        if (baseText.contains("(")) {
+            baseText = baseText.substring(0, baseText.indexOf(" ("));
+        }
 
-        current.setText(current.getText() + " (" + playerName + ")");
-
+        current.setText(baseText + " (" + playerName + ")");
     }
+
 
 
 }
