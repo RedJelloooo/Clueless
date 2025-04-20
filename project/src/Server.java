@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
  */
 public class Server extends JFrame {
 
+    private final GameBoard gameBoard = new GameBoard();
     private int playerCount = 0;
     private final static int MAX_PLAYERS = 16; //can possibly get rid of this
     private final JTextArea displayArea;
@@ -131,9 +132,6 @@ public class Server extends JFrame {
             }
         }
 
-        /**
-         * Runnable for the player threads
-         */
         @Override
         public void run() {
             try {
@@ -145,39 +143,122 @@ public class Server extends JFrame {
                 output.flush();
 
                 while (!clientCommand.equals("Quit")) {
-                    clientCommand = (String) input.readObject();
-                    displayMessage("\n" + clientCommand);
+                    try {
+                        clientCommand = (String) input.readObject();
+                        System.out.println("Received command: " + clientCommand);
+                        displayMessage("\n" + clientCommand);
 
-                    // for the server to track how many players we have
-                    if (clientCommand.equals(Commands.PLAYER_JOINED.toString())) {
-                        playerCount++;
-                        displayMessage("\n" + playerCount + " players in the game.");
-                    }
+                        // JOIN command
+                        if (clientCommand.startsWith("JOIN")) {
+                            String characterName = clientCommand.split(" ")[1];
+                            boolean added = gameBoard.addPlayer(characterName, characterName, 0, 0);
+                            if (added) {
+                                output.writeObject("JOINED " + characterName);
+                            } else {
+                                output.writeObject("FAILED JOIN");
+                            }
+                            output.flush();
+                        }
 
-                    if (clientCommand.equals(Commands.PLAYER_LEFT.toString())) {
-                        displayMessage("\n" + playerCount + " players in the game.");
-                    }
 
-                    // checks for word to calculate score of
-                    if (!clientCommand.isEmpty() && clientCommand.charAt(0) == '?') {
-                        calculateScore(clientCommand.replace("?",""));
-                    }
+                        // MOVE_DIRECTION command (up, down, left, right)
+                        if (clientCommand.startsWith("MOVE_DIRECTION")) {
+                            try {
+                                String direction = clientCommand.split(" ")[1];
+                                String playerId = "MissScarlet"; // replace later
 
-                    // checks for score at the end of the round
-                    if (!clientCommand.isEmpty() && clientCommand.charAt(0) == '#') {
-                        String[] scoreboard = clientCommand.replace("#","").split(" ");
-                        leaderboard = tournamentScoreboard.SortTextFile(scoreboard[0], Integer.parseInt(scoreboard[1]), Integer.parseInt(scoreboard[2]));
-                    }
+                                System.out.println("Player ID: " + playerId);
+                                PlayerState player = gameBoard.getPlayerState(playerId);
+                                if (player == null) {
+                                    System.out.println("Player not found!");
+                                    output.writeObject("MOVED false (player not found)");
+                                    output.flush();
+                                    continue;
+                                }
 
-                    // checks for get leaderboard command and send the leaderboard to the client
-                    if(clientCommand.equals(Commands.GET_LEADERBOARD.toString())) {
-                        output.writeObject("#" + leaderboard);
-                        output.flush();
+                                int row = player.getRow();
+                                int col = player.getCol();
+                                int newRow = row, newCol = col;
+                                System.out.printf("Current position: (%d,%d)%n", row, col);
+
+                                switch (direction) {
+                                    case "UP" -> newRow--;
+                                    case "DOWN" -> newRow++;
+                                    case "LEFT" -> newCol--;
+                                    case "RIGHT" -> newCol++;
+                                }
+
+                                System.out.printf("Attempting to move %s to (%d,%d)%n", direction, newRow, newCol);
+
+                                boolean canMove = gameBoard.canMove(playerId, direction);
+                                if (canMove) {
+                                    boolean moved = gameBoard.movePlayer(playerId, newRow, newCol);
+                                    output.writeObject("MOVED " + moved + " to (" + newRow + "," + newCol + ")");
+                                } else {
+                                    output.writeObject("MOVED false (Illegal move in direction: " + direction + ")");
+                                }
+                                output.flush();
+                            } catch (Exception ex) {
+                                System.err.println("Error in MOVE_DIRECTION block:");
+                                ex.printStackTrace();
+                                output.writeObject("MOVED false (Server error: " + ex.getMessage() + ")");
+                                output.flush();
+                            }
+                        }
+
+                        // WHERE command
+                        if (clientCommand.equals("WHERE")) {
+                            System.out.println("Where recevied");
+                            Room room = gameBoard.getRoom("MissScarlet");
+                            if (room != null) {
+                                output.writeObject("LOCATION " + room.getName() + " [" + room.getRow() + "," + room.getCol() + "]");
+                            } else {
+                                output.writeObject("LOCATION Unknown");
+                            }
+                            output.flush();
+                        }
+
+                        // other commands...
+                        if (clientCommand.equals(Commands.PLAYER_JOINED.toString())) {
+                            playerCount++;
+                            displayMessage("\n" + playerCount + " players in the game.");
+                        }
+
+                        if (clientCommand.equals(Commands.PLAYER_LEFT.toString())) {
+                            displayMessage("\n" + playerCount + " players in the game.");
+                        }
+
+                        if (!clientCommand.isEmpty() && clientCommand.charAt(0) == '?') {
+                            calculateScore(clientCommand.replace("?", ""));
+                        }
+
+                        if (!clientCommand.isEmpty() && clientCommand.charAt(0) == '#') {
+                            String[] scoreboard = clientCommand.replace("#", "").split(" ");
+                            leaderboard = tournamentScoreboard.SortTextFile(scoreboard[0], Integer.parseInt(scoreboard[1]), Integer.parseInt(scoreboard[2]));
+                        }
+
+                        if (clientCommand.equals(Commands.GET_LEADERBOARD.toString())) {
+                            output.writeObject("#" + leaderboard);
+                            output.flush();
+                        }
+
+                        // Optional: debug board after every move
+                        gameBoard.printBoardDebug();
+
+                    } catch (Exception inner) {
+                        System.err.println("Error while processing client command:");
+                        inner.printStackTrace();
+                        try {
+                            output.writeObject("ERROR " + inner.getMessage());
+                            output.flush();
+                        } catch (IOException io) {
+                            io.printStackTrace();
+                        }
                     }
                 }
-            }
-            catch (IOException | ClassNotFoundException e) {
-                Thread.currentThread().interrupt();
+            } catch (Exception outer) {
+                System.err.println("Fatal error in client thread:");
+                outer.printStackTrace();
             } finally {
                 try {
                     playerCount--;
@@ -185,10 +266,10 @@ public class Server extends JFrame {
                     connection.close(); // close connection to client
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
-                    System.exit(1);
                 }
             }
         }
+
 
         /**
          * Calculates the users current score

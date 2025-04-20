@@ -36,8 +36,15 @@ public class Client extends JFrame {
     private final String chatServer;
     private final Set<String> wordsGuessed = new HashSet<>();
     private String message = "";
+    private JComboBox<String> characterDropdown;
 
     // GUI components
+    private JPanel boardPanel;
+    private JLabel[][] roomLabels;
+
+    private static final int BOARD_SIZE = 5;
+    private JLabel[][] boardLabels;
+
     private final JButton backToMainMenuFromSkinsButton;
     private final JButton exitFromGameToMainMenuButton;
     private final JButton continueToNextRoundButton;
@@ -48,6 +55,7 @@ public class Client extends JFrame {
     private final JButton chooseName;
     private final JButton displayRules;
     private JScrollPane scrollPane;
+    private JButton whereAmIButton;
 
 
     private final JLabel scrambleForCurrentRoundLabel;
@@ -68,6 +76,12 @@ public class Client extends JFrame {
     private final JTextField textField;
 
     private String name = "Player";
+
+
+    private static final String[] characters = {
+            "MissScarlet", "ColonelMustard", "MrsWhite",
+            "MrGreen", "MrsPeacock", "ProfessorPlum"
+    };
 
     /**
      * file names for the images
@@ -132,6 +146,94 @@ public class Client extends JFrame {
 
         textField.setEditable(true);
 
+        whereAmIButton = new JButton("Where Am I?");
+        whereAmIButton.setBounds(600, 340, 150, 25);
+        whereAmIButton.setVisible(true);
+        add(whereAmIButton);
+
+        JButton upButton = new JButton("Up");
+        upButton.setBounds(25, 400, 100, 25);
+        add(upButton);
+
+        JButton downButton = new JButton("Down");
+        downButton.setBounds(25, 430, 100, 25);
+        add(downButton);
+
+        JButton leftButton = new JButton("Left");
+        leftButton.setBounds(25, 460, 100, 25);
+        add(leftButton);
+
+        JButton rightButton = new JButton("Right");
+        rightButton.setBounds(25, 490, 100, 25);
+        add(rightButton);
+
+        System.out.println("Sending move command: MOVE_DIRECTION UP");
+
+
+        // Add Action Listeners
+        upButton.addActionListener(e -> {
+            System.out.println("Sending move command: MOVE_DIRECTION UP");
+            sendData("MOVE_DIRECTION UP");
+        });
+        downButton.addActionListener(e -> {
+            System.out.println("Sending move command: MOVE_DIRECTION DOWN");
+            sendData("MOVE_DIRECTION DOWN");
+        });
+        leftButton.addActionListener(e -> {
+            System.out.println("Sending move command: MOVE_DIRECTION LEFT");
+            sendData("MOVE_DIRECTION LEFT");
+        });
+        rightButton.addActionListener(e -> {
+            System.out.println("Sending move command: MOVE_DIRECTION RIGHT");
+            sendData("MOVE_DIRECTION RIGHT");
+        });
+
+        whereAmIButton.addActionListener(e -> {
+            System.out.println("Sending command: WHERE");
+            sendData("WHERE");
+        });
+
+
+
+
+        boardLabels = new JLabel[BOARD_SIZE][BOARD_SIZE];
+        JPanel boardPanel = new JPanel(new GridLayout(BOARD_SIZE, BOARD_SIZE));
+        boardPanel.setBounds(150, 55, 400, 400); // adjust size as needed
+
+        String[][] roomGridNames = {
+                {"Study", "", "Hall", "", "Lounge"},
+                {"", "", "", "", ""},
+                {"Library", "", "Billiard", "", "Dining"},
+                {"", "", "", "", ""},
+                {"Conservatory", "", "Ballroom", "", "Kitchen"}
+        };
+
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
+                String name = roomGridNames[row][col];
+                JLabel label;
+
+                if (name.equals("")) {
+                    label = new JLabel(); // Blank hallway square
+                } else {
+                    label = new JLabel(name, SwingConstants.CENTER);
+                    label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                }
+
+                label.setOpaque(true);
+
+                label.setBackground(name.equals("") ? Color.BLACK : Color.CYAN);
+
+
+                boardLabels[row][col] = label;
+                boardPanel.add(label);
+            }
+        }
+
+        add(boardPanel);
+
+
+
 
         URL rulesURL = getClass().getResource("rules.png");
         if (rulesURL != null) {
@@ -159,6 +261,7 @@ public class Client extends JFrame {
         Icon[] icons = new Icon[names.length];
         for (int i = 0; i < names.length; i++) {
             URL image = getClass().getResource(names[i]);
+
             if (image != null) {
                 icons[i] = new ImageIcon(image);
             }
@@ -172,6 +275,20 @@ public class Client extends JFrame {
         imagesJComboBox = new JComboBox<>(names);
         imagesJComboBox.setMaximumRowCount(4); // display four rows
         display = new JLabel(icons[0]);
+
+        characterDropdown = new JComboBox<>(characters);
+        characterDropdown.setBounds(600, 240, 150, 25);
+        characterDropdown.setVisible(true);
+        add(characterDropdown);
+
+        JButton joinGameButton = new JButton("Join Game");
+        joinGameButton.setBounds(600, 240 + 35, 150, 25);
+        add(joinGameButton);
+
+        joinGameButton.addActionListener(e -> {
+            String selected = (String) characterDropdown.getSelectedItem();
+            sendData("JOIN " + selected);
+        });
 
         URL menuImage = getClass().getResource("menu.png");
         if (menuImage != null) {
@@ -271,7 +388,7 @@ public class Client extends JFrame {
                 int extraWidth = 10;
                 int extraHeight = 20;
 
-                setSize(820, 640);
+                setSize(820 + extraWidth, 640 + extraHeight); //820, 640
                 setLocationRelativeTo(null); // Center the window
             }
 
@@ -375,9 +492,10 @@ public class Client extends JFrame {
             try {
                 if (haveScramble) {
                     message = (String) inputStream.readObject();
-                } else {
+                }else {
                     scrambles = (String[]) inputStream.readObject();
                     haveScramble = true;
+                    continue; // skip rest of loop, no message to process
                 }
 
                 if (!message.isEmpty() && message.charAt(0) == '!') {
@@ -392,6 +510,28 @@ public class Client extends JFrame {
                     application.setLocationRelativeTo(null);
                     application.setTitle("Leaderboard");
                     application.setVisible(true);
+                }
+
+                //  NEW: Handle custom game messages from Clue-Less server
+                if (message.startsWith("LOCATION")) {
+                    // Format: "LOCATION Ballroom [2,2]"
+                    String[] parts = message.split(" ");
+                    String[] coords = parts[2].replace("[", "").replace("]", "").split(",");
+                    int row = Integer.parseInt(coords[0]);
+                    int col = Integer.parseInt(coords[1]);
+
+                    updateBoard(name, row, col);
+                    JOptionPane.showMessageDialog(this, message, "Location", JOptionPane.INFORMATION_MESSAGE);
+                }
+
+
+                if (message.startsWith("MOVED")) {
+                    JOptionPane.showMessageDialog(this, message, "Move Result", JOptionPane.INFORMATION_MESSAGE);
+                }
+
+
+                if (message.startsWith("JOINED") || message.startsWith("FAILED")) {
+                    JOptionPane.showMessageDialog(this, message, "Join Result", JOptionPane.INFORMATION_MESSAGE);
                 }
             } catch (ClassNotFoundException classNotFoundException) {
                 classNotFoundException.printStackTrace();
@@ -585,25 +725,26 @@ public class Client extends JFrame {
      * sets the bounds for all the needed button on the menu
      */
     private void initiateBounds() {
-//        rules.setBounds(0,0,800,600);
-        menu.setBounds(-10, -50, 800, 600);
+
+
+        menu.setBounds(-10, -50, 800, 600); //-10, -50, 800, 600
         backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
         scrambleForCurrentRoundLabel.setBounds(50, 225, 750, 60);
-        displayRules.setBounds(600,275,150,25);
+        displayRules.setBounds(600,404,150,25); //600,275,150,25
         exitFromGameToMainMenuButton.setBounds(600, 435, 150, 25);
-        exitTheApplicationButton.setBounds(600, 435, 150, 25);
-        joinTheTournamentButton.setBounds(600, 339, 150, 25);
+        exitTheApplicationButton.setBounds(600, 436, 150, 25); // 600, 435, 150, 25
+        joinTheTournamentButton.setBounds(600, 372, 150, 25);
         timeRemainingLabel.setBounds(50, 225, 700, 100);
         continueToNextRoundButton.setBounds(600,403,150,25);
         currentRoundLabel.setBounds(70, 310, 150, 50);
         gameBackgroundLabel.setBounds(0, 0, 800, 600);
         gameTimerLabel.setBounds(565, -10, 225, 150);
         imagesJComboBox.setBounds(600, 275, 150, 50);
-        displayLeaderboard.setBounds(600, 371, 150, 25);
+        displayLeaderboard.setBounds(600, 404, 150, 25);
         clientScoreLabel.setBounds(40, 340, 200, 50);
         enterName.setBounds(600, 275, 150, 50);
         textField.setBounds(250, 350, 400, 50);
-        skinsButton.setBounds(600, 403, 150, 25);
+//        skinsButton.setBounds(600, 467, 150, 25);
         currentName.setBounds(600, 350, 150, 50);
         chooseName.setBounds(600, 307, 150, 25);
         gameLogo.setBounds(0, -100, 800, 800);
@@ -670,8 +811,32 @@ public class Client extends JFrame {
         menu.setVisible(false);
         gameBackgroundLabel.setVisible(false);
         display.setVisible(false);
-//        rules.setVisible(false); // just in case
         if (scrollPane != null) scrollPane.setVisible(false);
         gameLogo.setVisible(false);
     }
+
+    private void updateBoard(String playerName, int row, int col) {
+        // Clear all previous tags
+        for (int r = 0; r < BOARD_SIZE; r++) {
+            for (int c = 0; c < BOARD_SIZE; c++) {
+                JLabel label = boardLabels[r][c];
+                if (label != null && label.getText() != null && label.getText().contains("(")) {
+                    int idx = label.getText().indexOf(" (");
+                    label.setText(label.getText().substring(0, idx));
+                }
+            }
+        }
+
+        // Safely update any tile, including hallways
+        JLabel current = boardLabels[row][col];
+        if (current == null) return;
+
+        String baseText = current.getText() == null ? "" : current.getText();
+        if (baseText.contains("(")) {
+            baseText = baseText.substring(0, baseText.indexOf(" ("));
+        }
+
+        current.setText(baseText + " (" + playerName + ")");
+    }
+
 }
