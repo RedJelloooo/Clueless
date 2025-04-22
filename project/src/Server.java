@@ -116,6 +116,7 @@ public class Server extends JFrame {
         private final Socket connection; // connection to client
         private final ObjectInputStream input;
         private final ObjectOutputStream output;
+        private String characterName;
 
         /**
          * constructor for the player
@@ -145,16 +146,21 @@ public class Server extends JFrame {
                 while (!clientCommand.equals("Quit")) {
                     try {
                         clientCommand = (String) input.readObject();
-                        System.out.println("Received command: " + clientCommand);
+                        System.out.println("[" + characterName + "] Command received: " + clientCommand);
                         displayMessage("\n" + clientCommand);
 
                         // JOIN command
+//                        if (clientCommand.startsWith("JOIN")) {
+//                            String characterName = clientCommand.split(" ")[1];
+//                            boolean added = gameBoard.addPlayer(characterName, characterName, 0, 0);
                         if (clientCommand.startsWith("JOIN")) {
-                            String characterName = clientCommand.split(" ")[1];
+                            this.characterName = clientCommand.split(" ")[1]; // Save it in the Player instance
                             boolean added = gameBoard.addPlayer(characterName, characterName, 0, 0);
+
                             if (added) {
                                 output.writeObject("JOINED " + characterName);
                             } else {
+                                System.out.println("JOIN failed: position at (0,0) occupied or name taken");  // ← Add this
                                 output.writeObject("FAILED JOIN");
                             }
                             output.flush();
@@ -165,10 +171,15 @@ public class Server extends JFrame {
                         if (clientCommand.startsWith("MOVE_DIRECTION")) {
                             try {
                                 String direction = clientCommand.split(" ")[1];
-                                String playerId = "MissScarlet"; // replace later
 
-                                System.out.println("Player ID: " + playerId);
-                                PlayerState player = gameBoard.getPlayerState(playerId);
+                                if (characterName == null) {
+                                    output.writeObject("ERROR Player has not joined yet.");
+                                    output.flush();
+                                    continue;
+                                }
+
+                                System.out.println("Player ID: " + characterName);
+                                PlayerState player = gameBoard.getPlayerState(characterName);
                                 if (player == null) {
                                     System.out.println("Player not found!");
                                     output.writeObject("MOVED false (player not found)");
@@ -190,9 +201,9 @@ public class Server extends JFrame {
 
                                 System.out.printf("Attempting to move %s to (%d,%d)%n", direction, newRow, newCol);
 
-                                boolean canMove = gameBoard.canMove(playerId, direction);
+                                boolean canMove = gameBoard.canMove(characterName, direction);
                                 if (canMove) {
-                                    boolean moved = gameBoard.movePlayer(playerId, newRow, newCol);
+                                    boolean moved = gameBoard.movePlayer(characterName, newRow, newCol);
                                     output.writeObject("MOVED " + moved + " to (" + newRow + "," + newCol + ")");
                                 } else {
                                     output.writeObject("MOVED false (Illegal move in direction: " + direction + ")");
@@ -209,7 +220,7 @@ public class Server extends JFrame {
                         // WHERE command
                         if (clientCommand.equals("WHERE")) {
                             System.out.println("Where recevied");
-                            Room room = gameBoard.getRoom("MissScarlet");
+                            Room room = gameBoard.getRoom(characterName);
                             if (room != null) {
                                 output.writeObject("LOCATION " + room.getName() + " [" + room.getRow() + "," + room.getCol() + "]");
                             } else {
