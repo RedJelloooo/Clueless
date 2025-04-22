@@ -56,6 +56,7 @@ public class Client extends JFrame {
     private final JButton displayRules;
     private JScrollPane scrollPane;
     private JButton whereAmIButton;
+    private final JButton makeSuggestionButton = new JButton("Make Suggestion");
 
 
     private final JLabel scrambleForCurrentRoundLabel;
@@ -289,6 +290,33 @@ public class Client extends JFrame {
             String selected = (String) characterDropdown.getSelectedItem();
             sendData("JOIN " + selected);
         });
+
+        makeSuggestionButton.addActionListener(e -> {
+            String[] suspects = {
+                    "MissScarlet", "ColonelMustard", "MrsWhite",
+                    "MrGreen", "MrsPeacock", "ProfessorPlum"
+            };
+
+            String[] weapons = {
+                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
+            };
+
+            JComboBox<String> suspectDropdown = new JComboBox<>(suspects);
+            JComboBox<String> weaponDropdown = new JComboBox<>(weapons);
+            JPanel panel = new JPanel(new GridLayout(2, 2));
+            panel.add(new JLabel("Suspect:"));
+            panel.add(suspectDropdown);
+            panel.add(new JLabel("Weapon:"));
+            panel.add(weaponDropdown);
+
+            int result = JOptionPane.showConfirmDialog(this, panel, "Make a Suggestion", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
+                String suspect = (String) suspectDropdown.getSelectedItem();
+                String weapon = (String) weaponDropdown.getSelectedItem();
+                sendData("SUGGEST " + suspect + " " + weapon);
+            }
+        });
+
 
         URL menuImage = getClass().getResource("menu.png");
         if (menuImage != null) {
@@ -714,6 +742,7 @@ public class Client extends JFrame {
         add(gameBackgroundLabel);
         add(menu);
         add(display);
+        add(makeSuggestionButton);
 
         if (scrollPane != null) {
             add(scrollPane); // must be last to control visibility correctly
@@ -727,7 +756,9 @@ public class Client extends JFrame {
     private void initiateBounds() {
 
 
+
         menu.setBounds(-10, -50, 800, 600); //-10, -50, 800, 600
+        makeSuggestionButton.setBounds(200, 20, 150, 25); //New Suggestion button
         backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
         scrambleForCurrentRoundLabel.setBounds(50, 225, 750, 60);
         displayRules.setBounds(600,404,150,25); //600,275,150,25

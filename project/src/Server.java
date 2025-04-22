@@ -2,6 +2,7 @@ import util.Commands;
 import util.Score;
 import util.TournamentScoreboard;
 import util.WordFile;
+import java.util.List;
 
 import javax.swing.*;
 import java.awt.BorderLayout;
@@ -150,9 +151,6 @@ public class Server extends JFrame {
                         displayMessage("\n" + clientCommand);
 
                         // JOIN command
-//                        if (clientCommand.startsWith("JOIN")) {
-//                            String characterName = clientCommand.split(" ")[1];
-//                            boolean added = gameBoard.addPlayer(characterName, characterName, 0, 0);
                         if (clientCommand.startsWith("JOIN")) {
                             this.characterName = clientCommand.split(" ")[1]; // Save it in the Player instance
                             boolean added = gameBoard.addPlayer(characterName, characterName, 0, 0);
@@ -216,6 +214,87 @@ public class Server extends JFrame {
                                 output.flush();
                             }
                         }
+
+                        if (clientCommand.startsWith("SUGGEST")) {
+                            try {
+                                String[] parts = clientCommand.split(" ");
+                                if (parts.length < 3) {
+                                    output.writeObject("ERROR Invalid suggestion format.");
+                                    output.flush();
+                                    return;
+                                }
+
+                                String suspect = parts[1];
+                                String weapon = parts[2];
+                                System.out.println(characterName + " made a suggestion: " + suspect + " with the " + weapon);
+
+                                Room currentRoom = gameBoard.getRoom(characterName);
+                                if (currentRoom == null) {
+                                    output.writeObject("ERROR Cannot suggest, room not found.");
+                                    output.flush();
+                                    return;
+                                }
+
+                                String roomName = currentRoom.getName();
+
+                                System.out.println(characterName + " made a suggestion: " +
+                                        suspect + " with the " + weapon + " in the " + currentRoom.getName());
+
+                                // Move suspect (character) to current room
+                                PlayerState suspectPlayer = gameBoard.getPlayerState(suspect);
+                                if (suspectPlayer != null) {
+                                    int oldRow = suspectPlayer.getRow();
+                                    int oldCol = suspectPlayer.getCol();
+
+                                    Room oldRoom = gameBoard.getRoom(suspect);
+                                    if (oldRoom != null) oldRoom.setOccupied(false);
+
+                                    suspectPlayer.setPosition(currentRoom.getRow(), currentRoom.getCol());
+                                    currentRoom.setOccupied(true);
+                                }
+
+                                String msg = characterName + " suggests: " + suspect + " with the " + weapon + " in the " + currentRoom.getName();
+                                output.writeObject(msg); // Send confirmation to suggester
+                                output.flush();
+
+                                // TODO: In future - notify other players to disprove
+                                // Step 4: Check if other players can disprove the suggestion
+                                List<String> suggestionCards = List.of(suspect, weapon, roomName);
+
+                                boolean disproved = false;
+                                for (PlayerState other : gameBoard.getAllPlayers()) {
+                                    String otherId = other.getPlayerId();
+
+                                    if (otherId.equals(characterName)) continue; // skip suggester
+
+                                    for (String card : other.getCards()) {
+                                        if (suggestionCards.contains(card)) {
+                                            output.writeObject("Your suggestion was disproved by " + otherId + " showing: " + card);
+                                            output.flush();
+
+                                            System.out.println(otherId + " disproved the suggestion with: " + card);
+                                            disproved = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (disproved) break;
+                                }
+
+                                if (!disproved) {
+                                    output.writeObject("No one could disprove your suggestion.");
+                                    output.flush();
+                                    System.out.println("Suggestion could not be disproved.");
+                                }
+
+
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                output.writeObject("ERROR Could not process suggestion.");
+                                output.flush();
+                            }
+                        }
+
 
                         // WHERE command
                         if (clientCommand.equals("WHERE")) {
