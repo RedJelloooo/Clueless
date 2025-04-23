@@ -1,0 +1,63 @@
+What You’ve Accomplished So Far
+Game board logic: 5x5 grid initialized with correct placement of rooms and hallways.
+Player movement system: Move validation with hallway connection logic and occupancy enforcement.
+Client-server architecture: Functional, with communication between clients and server.
+Suggestion mechanics: Players can make suggestions; suspects are moved to the room; disproval checking is partially implemented.
+Client GUI: Buttons for movement and actions; room and player labels are dynamically updated.
+
+Next Steps by Category
+Game Mechanics
+Implement Accusations:
+- Allow players to make formal accusations.
+- Compare accusation against the hidden solution (not yet implemented).
+- Handle win/loss conditions and notify all players.
+
+Win/Loss Handling:
+- End game when an accusation is correct.
+- Eliminate players who make a wrong accusation.
+
+Secret Passages:
+- Add logic for diagonal room movement from corner rooms (Study ↔ Kitchen, Lounge ↔ Conservatory).
+
+Card Distribution:
+- On game start, randomly assign character, weapon, and room cards.
+- Hide the solution (one of each type), and distribute the rest to players.
+
+🔁 Turn Management
+Turn-based Control System:
+- Add a way to cycle through player turns.
+- Restrict actions (like move/suggest/accuse) to current player only.
+- Send turn notifications to all clients.
+
+Skip turns / handle blocked players:
+- If a player cannot move or make a suggestion, allow them to pass or accuse.
+
+Communication Enhancements
+Broadcast Suggestions & Moves:
+- Notify all players when a move or suggestion is made (not just the one making it).
+
+Disprove Interaction:
+- Prompt each other player in turn to try to disprove a suggestion.
+- Make only the first one who can disprove show a card (private to suggester).
+
+GUI Improvements (Optional)
+Show Character Tokens:
+- Visually display each character on the board.
+- Show player names or initials on top of the room/hallway tiles.
+
+Suggestion/Accusation Panels: (Optional)
+- Separate and visually enhanced UI for making suggestions and accusations.
+
+Game Start Screen:
+Let players choose characters and wait for others before starting.
+
+Robustness & Quality
+Game State Syncing:
+- Ensure all clients are synchronized after any move/suggestion/accusation.
+- Possibly serialize and send a full GameBoard snapshot.
+
+Error Handling:
+Improve server-side validation and feedback for invalid commands or unexpected errors.
+
+Logging & Debug Info:
+Centralize logs and errors for easier debugging.
