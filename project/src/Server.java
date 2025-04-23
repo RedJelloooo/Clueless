@@ -283,23 +283,34 @@ public class Server extends JFrame {
                                 List<String> suggestionCards = List.of(suspect, weapon, roomName);
 
                                 boolean disproved = false;
-                                for (PlayerState other : gameBoard.getAllPlayers()) {
-                                    String otherId = other.getPlayerId();
+                                for (Player p : players) {
+                                    // skip the suggester
+                                    if (p.characterName.equals(characterName)) continue;
 
-                                    if (otherId.equals(characterName)) continue; // skip suggester
+                                    PlayerState otherState = gameBoard.getPlayerState(p.characterName);
+                                    if (otherState == null) continue;
 
-                                    for (String card : other.getCards()) {
+                                    for (String card : otherState.getCards()) {
                                         if (suggestionCards.contains(card)) {
-                                            output.writeObject("Your suggestion was disproved by " + otherId + " showing: " + card);
-                                            output.flush();
+                                            // Found someone who can disprove — send only to that player
+                                            try {
+                                                p.output.writeObject("You can disprove " + characterName + "'s suggestion. Reveal: " + card);
+                                                p.output.flush();
 
-                                            System.out.println(otherId + " disproved the suggestion with: " + card);
-                                            disproved = true;
+                                                // Notify suggester
+                                                output.writeObject("Your suggestion was disproved by " + p.characterName + " showing: " + card);
+                                                output.flush();
+
+                                                System.out.println(p.characterName + " disproved the suggestion with: " + card);
+                                                disproved = true;
+                                            } catch (IOException e) {
+                                                e.printStackTrace();
+                                            }
                                             break;
                                         }
                                     }
 
-                                    if (disproved) break;
+                                    if (disproved) break; // Stop once someone disproves
                                 }
 
                                 if (!disproved) {
@@ -307,7 +318,6 @@ public class Server extends JFrame {
                                     output.flush();
                                     System.out.println("Suggestion could not be disproved.");
                                 }
-
 
                             } catch (Exception ex) {
                                 ex.printStackTrace();
