@@ -57,6 +57,7 @@ public class Client extends JFrame {
     private JScrollPane scrollPane;
     private JButton whereAmIButton;
     private final JButton makeSuggestionButton = new JButton("Make Suggestion");
+    private final JButton makeAccusationButton = new JButton("Make Accusation");
 
 
     private final JLabel scrambleForCurrentRoundLabel;
@@ -317,6 +318,44 @@ public class Client extends JFrame {
             }
         });
 
+        makeAccusationButton.addActionListener(e -> {
+            String[] suspects = {
+                    "MissScarlet", "ColonelMustard", "MrsWhite",
+                    "MrGreen", "MrsPeacock", "ProfessorPlum"
+            };
+
+            String[] weapons = {
+                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
+            };
+
+            String[] rooms = {
+                    "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+                    "Conservatory", "Ballroom", "Kitchen"
+            };
+
+            JComboBox<String> suspectDropdown = new JComboBox<>(suspects);
+            JComboBox<String> weaponDropdown = new JComboBox<>(weapons);
+            JComboBox<String> roomDropdown = new JComboBox<>(rooms);
+
+            JPanel panel = new JPanel(new GridLayout(3, 2));
+            panel.add(new JLabel("Suspect:"));
+            panel.add(suspectDropdown);
+            panel.add(new JLabel("Weapon:"));
+            panel.add(weaponDropdown);
+            panel.add(new JLabel("Room:"));
+            panel.add(roomDropdown);
+
+            int result = JOptionPane.showConfirmDialog(this, panel, "Make an Accusation", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
+                String suspect = (String) suspectDropdown.getSelectedItem();
+                String weapon = (String) weaponDropdown.getSelectedItem();
+                String room = (String) roomDropdown.getSelectedItem();
+
+                sendData("ACCUSE " + suspect + " " + weapon + " " + room);
+            }
+        });
+
+
 
         URL menuImage = getClass().getResource("menu.png");
         if (menuImage != null) {
@@ -540,6 +579,11 @@ public class Client extends JFrame {
                     application.setVisible(true);
                 }
 
+                if (message.startsWith("You WON!") || message.startsWith("Your accusation was incorrect")) {
+                    JOptionPane.showMessageDialog(this, message, "Accusation Result", JOptionPane.INFORMATION_MESSAGE);
+                }
+
+
                 //  NEW: Handle custom game messages from Clue-Less server
                 if (message.startsWith("LOCATION")) {
                     // Format: "LOCATION Ballroom [2,2]"
@@ -719,6 +763,7 @@ public class Client extends JFrame {
      */
     private void addJFrameComponents() {
 //        add(rules);
+        add(makeAccusationButton);
         add(displayRules);
         add(displayLeaderboard);
         add(gameLogo);
@@ -758,7 +803,8 @@ public class Client extends JFrame {
 
 
         menu.setBounds(-10, -50, 800, 600); //-10, -50, 800, 600
-        makeSuggestionButton.setBounds(200, 20, 150, 25); //New Suggestion button
+        makeSuggestionButton.setBounds(150, 20, 150, 25); //New Suggestion button
+        makeAccusationButton.setBounds(400, 20, 150, 25);
         backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
         scrambleForCurrentRoundLabel.setBounds(50, 225, 750, 60);
         displayRules.setBounds(600,404,150,25); //600,275,150,25

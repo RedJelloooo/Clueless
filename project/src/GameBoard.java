@@ -9,6 +9,9 @@ public class GameBoard {
     private final Room[][] rooms;
     private final Set<Hallway> hallways;
     private final Map<String, PlayerState> playerPositions; // key = player name/ID
+    private final String solutionCharacter;
+    private final String solutionWeapon;
+    private final String solutionRoom;
 
     public GameBoard() {
         this.rooms = new Room[SIZE][SIZE];
@@ -16,7 +19,21 @@ public class GameBoard {
         this.playerPositions = new HashMap<>();
         initializeRooms();
         initializeHallways();
+
+        // Generate random hidden solution
+        this.solutionCharacter = pickRandom(new String[]{
+                "MissScarlet", "ColonelMustard", "MrsWhite",
+                "MrGreen", "MrsPeacock", "ProfessorPlum"
+        });
+        this.solutionWeapon = pickRandom(new String[]{
+                "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
+        });
+        this.solutionRoom = pickRandom(new String[]{
+                "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+                "Conservatory", "Ballroom", "Kitchen"
+        });
     }
+
 
 
     private void initializeRooms() {
@@ -184,6 +201,16 @@ public class GameBoard {
 
         return true;
     }
+    private String pickRandom(String[] array) {
+        return array[new Random().nextInt(array.length)];
+    }
+
+    public boolean isCorrectAccusation(String character, String weapon, String room) {
+        return solutionCharacter.equals(character) &&
+                solutionWeapon.equals(weapon) &&
+                solutionRoom.equals(room);
+    }
+
 
 }
 

@@ -2,6 +2,8 @@ import util.Commands;
 import util.Score;
 import util.TournamentScoreboard;
 import util.WordFile;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
@@ -11,6 +13,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Server class creates a server for players to connect to
@@ -25,10 +28,12 @@ public class Server extends JFrame {
     private final static int MAX_PLAYERS = 16; //can possibly get rid of this
     private final JTextArea displayArea;
     private ServerSocket server;
+    private final List<Player> players = new ArrayList<>();
     private final ExecutorService playerThreads;
     private final String[] scrambles;
     private final TournamentScoreboard tournamentScoreboard;
     private String leaderboard = "";
+
 
     /**
      * creates a GUI interface for the server side.
@@ -81,7 +86,10 @@ public class Server extends JFrame {
             displayMessage("\nConnection received from: " + connection.getInetAddress().getHostName());
 
             try {
-                playerThreads.execute(new Player(connection));
+                Player newPlayer = new Player(connection);
+                players.add(newPlayer);
+                playerThreads.execute(newPlayer);
+
             } catch (ClassNotFoundException interruptedException) {
                 interruptedException.printStackTrace();
             }
@@ -118,6 +126,7 @@ public class Server extends JFrame {
         private final ObjectInputStream input;
         private final ObjectOutputStream output;
         private String characterName;
+        private boolean eliminated = false;
 
         /**
          * constructor for the player
@@ -167,6 +176,12 @@ public class Server extends JFrame {
 
                         // MOVE_DIRECTION command (up, down, left, right)
                         if (clientCommand.startsWith("MOVE_DIRECTION")) {
+                            if (eliminated) {
+                                output.writeObject("ERROR You are eliminated and cannot move.");
+                                output.flush();
+                                continue;
+                            }
+
                             try {
                                 String direction = clientCommand.split(" ")[1];
 
@@ -216,6 +231,12 @@ public class Server extends JFrame {
                         }
 
                         if (clientCommand.startsWith("SUGGEST")) {
+                            if (eliminated) {
+                                output.writeObject("ERROR You are eliminated and cannot make suggestions.");
+                                output.flush();
+                                continue;
+                            }
+
                             try {
                                 String[] parts = clientCommand.split(" ");
                                 if (parts.length < 3) {
@@ -295,9 +316,56 @@ public class Server extends JFrame {
                             }
                         }
 
+                        if (clientCommand.startsWith("ACCUSE")) {
+                            if (eliminated) {
+                                output.writeObject("ERROR You are eliminated and cannot make accusations.");
+                                output.flush();
+                                continue;
+                            }
+
+                            String[] parts = clientCommand.split(" ");
+                            if (parts.length < 4) {
+                                output.writeObject("ERROR Invalid accusation format. Use: ACCUSE <Suspect> <Weapon> <Room>");
+                                output.flush();
+                                continue;
+                            }
+
+                            String accusedCharacter = parts[1];
+                            String accusedWeapon = parts[2];
+                            String accusedRoom = parts[3];
+
+                            boolean correct = gameBoard.isCorrectAccusation(accusedCharacter, accusedWeapon, accusedRoom);
+
+                            if (correct) {
+                                output.writeObject("You WON! Your accusation was correct: " + accusedCharacter + " with the " + accusedWeapon + " in the " + accusedRoom + ".");
+                                output.flush();
+
+                                broadcast(characterName + " has made a CORRECT accusation and won the game!");
+                                System.out.println(characterName + " WON the game!");
+                                // You could optionally shut down the server or mark the game as over here
+                            } else {
+                                eliminated = true;
+                                output.writeObject("Your accusation was incorrect. You are now out of the game.");
+                                output.flush();
+
+                                broadcast(characterName + " made an incorrect accusation and is eliminated from the game.");
+                                System.out.println(characterName + " has been eliminated.");
+                                // Optional: disable further actions from this player
+                            }
+
+                            continue; // skip to next command
+                        }
+
+
 
                         // WHERE command
                         if (clientCommand.equals("WHERE")) {
+                            if (eliminated) {
+                                output.writeObject("ERROR You are eliminated and cannot check location.");
+                                output.flush();
+                                continue;
+                            }
+
                             System.out.println("Where recevied");
                             Room room = gameBoard.getRoom(characterName);
                             if (room != null) {
@@ -352,12 +420,14 @@ public class Server extends JFrame {
             } finally {
                 try {
                     playerCount--;
+                    players.remove(this);  // Remove this player from the list
                     displayMessage("\nThere are currently " + playerCount + " players\n");
-                    connection.close(); // close connection to client
+                    connection.close();
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
             }
+
         }
 
 
@@ -375,4 +445,17 @@ public class Server extends JFrame {
         }
 
     }
+
+    private void broadcast(String message) {
+        for (Player player : players) {
+            try {
+                player.output.writeObject(message);
+                player.output.flush();
+            } catch (IOException e) {
+                System.err.println("Failed to send message to player: " + e.getMessage());
+            }
+        }
+    }
+
+
 }
