@@ -11,6 +11,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -294,13 +295,10 @@ public class Client extends JFrame {
         joinGameButton.setBounds(600, 240 + 35, 150, 25);
         add(joinGameButton);
 
-//        joinGameButton.addActionListener(e -> {
-//            String selected = (String) characterDropdown.getSelectedItem();
-//            sendData("JOIN " + selected);
-//        });
+
         joinGameButton.addActionListener(e -> {
             String selected = (String) characterDropdown.getSelectedItem();
-            name = selected; // 👈 now this is passed to updateBoard as playerName
+            name = selected;
             sendData("JOIN " + selected);
         });
 
@@ -903,6 +901,7 @@ public class Client extends JFrame {
         }
     }
 
+
     private void hideAllScreens() {
         menu.setVisible(false);
         gameBackgroundLabel.setVisible(false);
@@ -911,8 +910,10 @@ public class Client extends JFrame {
         gameLogo.setVisible(false);
     }
 
+
+
     private void updateBoard(String playerName, int row, int col) {
-        // Clear all previous tags
+        // Clear all previous player tags but preserve base room name
         for (int r = 0; r < BOARD_SIZE; r++) {
             for (int c = 0; c < BOARD_SIZE; c++) {
                 JLabel label = boardLabels[r][c];
@@ -923,18 +924,34 @@ public class Client extends JFrame {
             }
         }
 
-        // Safely update any tile, including hallways
+        // Add this player to the current tile's text
         JLabel current = boardLabels[row][col];
         if (current == null) return;
 
         String baseText = current.getText() == null ? "" : current.getText();
+        String currentTag = getInitials(playerName);
+
+        // Check if label already has any player initials
         if (baseText.contains("(")) {
+            // shouldn't happen since we clear above, but just in case
             baseText = baseText.substring(0, baseText.indexOf(" ("));
         }
 
-//        current.setText(baseText + " (" + playerName + ")");// TODO Delete this line
-        current.setText(baseText + " (" + getInitials(playerName) + ")");
+        String newText = current.getText();
+        if (newText != null && newText.contains("(")) {
+            // Append to existing initials
+            String existingInitials = newText.substring(newText.indexOf("(") + 1, newText.indexOf(")"));
+            Set<String> initials = new HashSet<>(Arrays.asList(existingInitials.split(", ")));
+            initials.add(currentTag); // avoid duplicates
+
+            String joined = String.join(", ", initials);
+            current.setText(baseText + " (" + joined + ")");
+        } else {
+            // First tag
+            current.setText(baseText + " (" + currentTag + ")");
+        }
     }
+
 
     private String getInitials(String characterName) {
         // Convert names like "MissScarlet" to "MS", "ProfessorPlum" to "PP"
@@ -944,6 +961,8 @@ public class Client extends JFrame {
         }
         return initials.toString().toUpperCase();
     }
+
+
 
 
 }
