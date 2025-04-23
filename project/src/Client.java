@@ -203,28 +203,37 @@ public class Client extends JFrame {
         boardPanel.setBounds(150, 55, 400, 400); // adjust size as needed
 
         String[][] roomGridNames = {
-                {"Study", "", "Hall", "", "Lounge"},
-                {"", "", "", "", ""},
-                {"Library", "", "Billiard", "", "Dining"},
-                {"", "", "", "", ""},
-                {"Conservatory", "", "Ballroom", "", "Kitchen"}
+                {"Study", "H", "Hall", "H", "Lounge"},
+                {"H", "", "H", "", "H"},
+                {"Library", "H", "Billiard", "H", "Dining"},
+                {"H", "", "H", "", "H"},
+                {"Conservatory", "H", "Ballroom", "H", "Kitchen"}
         };
 
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
                 String name = roomGridNames[row][col];
-                JLabel label;
+                JLabel label = new JLabel(); // safe default
 
-                if (name.equals("")) {
-                    label = new JLabel(); // Blank hallway square
-                } else {
-                    label = new JLabel(name, SwingConstants.CENTER);
-                    label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                }
 
                 label.setOpaque(true);
 
-                label.setBackground(name.equals("") ? Color.BLACK : Color.CYAN);
+                if (name.equals("H")) {
+                    label = new JLabel(); // Hallway
+                    label.setOpaque(true);
+                    label.setBackground(Color.LIGHT_GRAY);
+                    label.setToolTipText("Hallway");
+                } else if (name.equals("")) {
+                    label = new JLabel(); // Invalid/unused
+                    label.setOpaque(true);
+                    label.setBackground(Color.BLACK);
+                } else {
+                    label = new JLabel(name, SwingConstants.CENTER); // Room
+                    label.setOpaque(true);
+                    label.setBackground(Color.CYAN);
+                    label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                    label.setToolTipText(name);
+                }
 
 
                 boardLabels[row][col] = label;
@@ -233,8 +242,6 @@ public class Client extends JFrame {
         }
 
         add(boardPanel);
-
-
 
 
         URL rulesURL = getClass().getResource("rules.png");
@@ -287,10 +294,16 @@ public class Client extends JFrame {
         joinGameButton.setBounds(600, 240 + 35, 150, 25);
         add(joinGameButton);
 
+//        joinGameButton.addActionListener(e -> {
+//            String selected = (String) characterDropdown.getSelectedItem();
+//            sendData("JOIN " + selected);
+//        });
         joinGameButton.addActionListener(e -> {
             String selected = (String) characterDropdown.getSelectedItem();
+            name = selected; // 👈 now this is passed to updateBoard as playerName
             sendData("JOIN " + selected);
         });
+
 
         makeSuggestionButton.addActionListener(e -> {
             String[] suspects = {
@@ -605,6 +618,12 @@ public class Client extends JFrame {
                 if (message.startsWith("JOINED") || message.startsWith("FAILED")) {
                     JOptionPane.showMessageDialog(this, message, "Join Result", JOptionPane.INFORMATION_MESSAGE);
                 }
+
+                if (message.startsWith("ERROR")) {
+                    JOptionPane.showMessageDialog(this, message, "Game Error", JOptionPane.ERROR_MESSAGE);
+                }
+
+
             } catch (ClassNotFoundException classNotFoundException) {
                 classNotFoundException.printStackTrace();
             }
@@ -913,7 +932,18 @@ public class Client extends JFrame {
             baseText = baseText.substring(0, baseText.indexOf(" ("));
         }
 
-        current.setText(baseText + " (" + playerName + ")");
+//        current.setText(baseText + " (" + playerName + ")");// TODO Delete this line
+        current.setText(baseText + " (" + getInitials(playerName) + ")");
     }
+
+    private String getInitials(String characterName) {
+        // Convert names like "MissScarlet" to "MS", "ProfessorPlum" to "PP"
+        StringBuilder initials = new StringBuilder();
+        for (String part : characterName.split("(?=[A-Z])")) {  // Split camel case
+            if (!part.isEmpty()) initials.append(part.charAt(0));
+        }
+        return initials.toString().toUpperCase();
+    }
+
 
 }

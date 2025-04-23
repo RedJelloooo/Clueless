@@ -256,6 +256,14 @@ public class Server extends JFrame {
                                     return;
                                 }
 
+                                if (currentRoom.getName().equals("Hallway")) {
+                                    System.out.print(currentRoom.getName());
+                                    output.writeObject("ERROR Cannot make a suggestion from a hallway.");
+                                    output.flush();
+                                    continue; // <--- this keeps the socket open and loops to next command;
+                                }
+
+
                                 String roomName = currentRoom.getName();
 
                                 System.out.println(characterName + " made a suggestion: " +
