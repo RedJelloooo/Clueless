@@ -79,13 +79,27 @@ public class GameBoard {
         }
     }
 
-    public boolean addPlayer(String playerId, String characterName, int row, int col) {
-        if (rooms[row][col].isOccupied()) return false;
-        PlayerState player = new PlayerState(playerId, characterName, row, col);
-        playerPositions.put(playerId, player);
-        rooms[row][col].setOccupied(true);
-        return true;
+//    public boolean addPlayer(String playerId, String characterName, int row, int col) {
+//        if (rooms[row][col].isOccupied()) return false;
+//        PlayerState player = new PlayerState(playerId, characterName, row, col);
+//        playerPositions.put(playerId, player);
+//        rooms[row][col].setOccupied(true);
+//        return true;
+//    }
+public boolean addPlayer(String playerId, String characterName, int row, int col) {
+    Room room = rooms[row][col];
+    if (room == null) return false;
+
+    if (room.getName().equals("Hallway") && room.isOccupied()) {
+        return false; // Hallways can only have one player
     }
+
+    PlayerState player = new PlayerState(playerId, characterName, row, col);
+    playerPositions.put(playerId, player);
+    room.addOccupant(playerId);
+    return true;
+}
+
 
 
     //TODO for debugging
@@ -106,24 +120,65 @@ public class GameBoard {
             return false;
         }
 
+        Room currentRoom = rooms[currentRow][currentCol];
         Room targetRoom = rooms[targetRow][targetCol];
         if (targetRoom == null) {
             System.out.println("Target room is null at: (" + targetRow + "," + targetCol + ")");
             return false;
         }
 
-        if (targetRoom.isOccupied()) {
-            System.out.println("Target room is occupied: " + targetRoom.getName());
+        // Restrict hallways to 1 occupant
+        if (targetRoom.getName().equals("Hallway") && targetRoom.isOccupied()) {
+            System.out.println("Target hallway is already occupied.");
             return false;
         }
 
-        rooms[currentRow][currentCol].setOccupied(false);
-        targetRoom.setOccupied(true);
+        // Move player
+        if (currentRoom != null) {
+            currentRoom.removeOccupant(playerId);
+        }
+        targetRoom.addOccupant(playerId);
         player.setPosition(targetRow, targetCol);
 
         System.out.println("Player moved successfully to: (" + targetRow + "," + targetCol + ")");
         return true;
     }
+
+//    public boolean movePlayer(String playerId, int targetRow, int targetCol) {
+//        PlayerState player = playerPositions.get(playerId);
+//        if (player == null) {
+//            System.out.println("No player found with ID: " + playerId);
+//            return false;
+//        }
+//
+//        int currentRow = player.getRow();
+//        int currentCol = player.getCol();
+//        System.out.printf("Player at (%d,%d), attempting to move to (%d,%d)\n", currentRow, currentCol, targetRow, targetCol);
+//
+//        Hallway attemptedPath = new Hallway(currentRow, currentCol, targetRow, targetCol);
+//        if (!hallways.contains(attemptedPath)) {
+//            System.out.println("Invalid hallway: " + attemptedPath);
+//            return false;
+//        }
+//
+//        Room targetRoom = rooms[targetRow][targetCol];
+//        if (targetRoom == null) {
+//            System.out.println("Target room is null at: (" + targetRow + "," + targetCol + ")");
+//            return false;
+//        }
+//
+//        if (targetRoom.isOccupied()) {
+//            System.out.println("Target room is occupied: " + targetRoom.getName());
+//            return false;
+//        }
+//
+//        rooms[currentRow][currentCol].setOccupied(false);
+//        targetRoom.setOccupied(true);
+//        player.setPosition(targetRow, targetCol);
+//
+//        System.out.println("Player moved successfully to: (" + targetRow + "," + targetCol + ")");
+//        return true;
+//    }
 
 
 

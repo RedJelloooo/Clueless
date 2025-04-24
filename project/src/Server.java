@@ -295,10 +295,11 @@ public class Server extends JFrame {
                                     int oldCol = suspectPlayer.getCol();
 
                                     Room oldRoom = gameBoard.getRoom(suspect);
-                                    if (oldRoom != null) oldRoom.setOccupied(false);
+                                    if (oldRoom != null) oldRoom.removeOccupant(suspect);
 
                                     suspectPlayer.setPosition(currentRoom.getRow(), currentRoom.getCol());
-                                    currentRoom.setOccupied(true);
+                                    currentRoom.addOccupant(suspect);
+
                                 }
 
                                 String msg = characterName + " suggests: " + suspect + " with the " + weapon + " in the " + currentRoom.getName();
