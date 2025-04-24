@@ -78,27 +78,38 @@ public class GameBoard {
             }
         }
     }
+    public boolean addPlayer(String playerId, String characterName, int row, int col) {
+        Room room = rooms[row][col];
+        if (room == null) return false;
 
-//    public boolean addPlayer(String playerId, String characterName, int row, int col) {
-//        if (rooms[row][col].isOccupied()) return false;
-//        PlayerState player = new PlayerState(playerId, characterName, row, col);
-//        playerPositions.put(playerId, player);
-//        rooms[row][col].setOccupied(true);
-//        return true;
-//    }
-public boolean addPlayer(String playerId, String characterName, int row, int col) {
-    Room room = rooms[row][col];
-    if (room == null) return false;
+        // Restrict hallways to one player
+        if (room.getName().equals("Hallway") && room.isOccupied()) {
+            System.out.println("Hallway at (" + row + "," + col + ") is already occupied.");
+            return false;
+        }
 
-    if (room.getName().equals("Hallway") && room.isOccupied()) {
-        return false; // Hallways can only have one player
+        PlayerState player = new PlayerState(playerId, characterName, row, col);
+        playerPositions.put(playerId, player);
+        room.addOccupant(playerId);
+
+        return true;
     }
 
-    PlayerState player = new PlayerState(playerId, characterName, row, col);
-    playerPositions.put(playerId, player);
-    room.addOccupant(playerId);
-    return true;
-}
+
+//public boolean addPlayer(String playerId, String characterName, int row, int col) {
+//    Room room = rooms[row][col];
+//    if (room == null) return false;
+//
+//    if (room.getName().equals("Hallway") && room.isOccupied()) {
+//        return false; // Hallways can only have one player
+//    }
+//
+//    PlayerState player = new PlayerState(playerId, characterName, row, col);
+//    playerPositions.put(playerId, player);
+//    room.addOccupant(playerId);
+//    return true;
+//}
+//TODO delete up
 
 
 
