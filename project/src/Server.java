@@ -11,6 +11,7 @@ import java.awt.BorderLayout;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -33,6 +34,15 @@ public class Server extends JFrame {
     private final String[] scrambles;
     private final TournamentScoreboard tournamentScoreboard;
     private String leaderboard = "";
+    private static final Map<String, int[]> startingPositions = Map.of(
+            "MissScarlet", new int[]{4, 0},
+            "ColonelMustard", new int[]{0, 2},
+            "MrsWhite", new int[]{0, 4},
+            "MrGreen", new int[]{4, 4},
+            "MrsPeacock", new int[]{4, 2},
+            "ProfessorPlum", new int[]{0, 0}
+    );
+
 
 
     /**
@@ -161,8 +171,16 @@ public class Server extends JFrame {
 
                         // JOIN command
                         if (clientCommand.startsWith("JOIN")) {
-                            this.characterName = clientCommand.split(" ")[1]; // Save it in the Player instance
-                            boolean added = gameBoard.addPlayer(characterName, characterName, 0, 0);
+                            this.characterName = clientCommand.split(" ")[1];
+
+                            int[] start = startingPositions.get(characterName);
+                            if (start == null) {
+                                output.writeObject("FAILED JOIN: Unknown character");
+                                output.flush();
+                                continue;
+                            }
+
+                            boolean added = gameBoard.addPlayer(characterName, characterName, start[0], start[1]);
 
                             if (added) {
                                 output.writeObject("JOINED " + characterName);
@@ -172,6 +190,7 @@ public class Server extends JFrame {
                             }
                             output.flush();
                         }
+
 
 
                         // MOVE_DIRECTION command (up, down, left, right)
