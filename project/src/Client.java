@@ -621,6 +621,18 @@ public class Client extends JFrame {
                     JOptionPane.showMessageDialog(this, message, "Game Error", JOptionPane.ERROR_MESSAGE);
                 }
 
+                if (message.startsWith("ALL_POSITIONS")) {
+                    String[] parts = message.split(" ");
+                    for (int i = 1; i < parts.length; i++) {
+                        String[] tokens = parts[i].split(",");
+                        String name = tokens[0];
+                        int row = Integer.parseInt(tokens[1]);
+                        int col = Integer.parseInt(tokens[2]);
+                        updateBoard(name, row, col);  // This already handles initials + display logic
+                    }
+                }
+
+
 
             } catch (ClassNotFoundException classNotFoundException) {
                 classNotFoundException.printStackTrace();

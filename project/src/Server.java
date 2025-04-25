@@ -189,6 +189,7 @@ public class Server extends JFrame {
                                 output.writeObject("FAILED JOIN");
                             }
                             output.flush();
+                            broadcastPlayerPositions();  // <-- NEW: update all clients with everyone's positions
                         }
 
 
@@ -494,6 +495,24 @@ public class Server extends JFrame {
             }
         }
     }
+
+    private void broadcastPlayerPositions() {
+        List<PlayerState> allPlayers = gameBoard.getAllPlayers();
+        for (Player p : players) {
+            try {
+                StringBuilder sb = new StringBuilder("ALL_POSITIONS");
+                for (PlayerState ps : allPlayers) {
+                    sb.append(" ").append(ps.getCharacterName())
+                            .append(",").append(ps.getRow()).append(",").append(ps.getCol());
+                }
+                p.output.writeObject(sb.toString());
+                p.output.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 
 }
