@@ -6,11 +6,13 @@ import util.WordFile;
 import java.util.ArrayList;
 import java.util.List;
 
+
 import javax.swing.*;
 import java.awt.BorderLayout;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.awt.Point;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -194,6 +196,8 @@ public class Server extends JFrame {
 
 
 
+
+
                         // MOVE_DIRECTION command (up, down, left, right)
                         if (clientCommand.startsWith("MOVE_DIRECTION")) {
                             if (eliminated) {
@@ -354,6 +358,49 @@ public class Server extends JFrame {
                                 output.flush();
                             }
                         }
+
+                        if (clientCommand.equals("SECRET_PASSAGE")) {
+                            PlayerState player = gameBoard.getPlayerState(characterName);
+                            if (player == null) {
+                                output.writeObject("ERROR Player not found.");
+                                output.flush();
+                                continue;
+                            }
+
+                            int currentRow = player.getRow();
+                            int currentCol = player.getCol();
+                            Room currentRoom = gameBoard.getRoom(characterName);
+
+                            if (currentRoom == null || currentRoom.getName().equals("Hallway")) {
+                                output.writeObject("ERROR Not in a room with a secret passage.");
+                                output.flush();
+                                continue;
+                            }
+
+                            Point destination = gameBoard.getSecretPassageDestination(currentRow, currentCol);
+                            if (destination == null) {
+                                output.writeObject("ERROR No secret passage from this room.");
+                                output.flush();
+                                continue;
+                            }
+
+                            Room targetRoom = gameBoard.getRoom(destination.x, destination.y);
+                            if (targetRoom == null) {
+                                output.writeObject("ERROR Destination room is invalid.");
+                                output.flush();
+                                continue;
+                            }
+
+                            currentRoom.removeOccupant(characterName);
+                            targetRoom.addOccupant(characterName);
+                            player.setPosition(destination.x, destination.y);
+
+                            output.writeObject("MOVED true to (" + destination.x + "," + destination.y + ") via secret passage");
+                            output.flush();
+                            broadcastPlayerPositions();
+                        }
+
+
 
                         if (clientCommand.startsWith("ACCUSE")) {
                             if (eliminated) {

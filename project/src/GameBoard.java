@@ -243,6 +243,28 @@ public class GameBoard {
                 solutionRoom.equals(room);
     }
 
+    public Point getSecretPassageDestination(int row, int col) {
+        if (rooms[row][col] == null) return null;
+        String roomName = rooms[row][col].getName();
+
+        return switch (roomName) {
+            case "Study" -> new Point(4, 4); // Kitchen
+            case "Kitchen" -> new Point(0, 0); // Study
+            case "Conservatory" -> new Point(0, 4); // Lounge
+            case "Lounge" -> new Point(4, 0); // Conservatory
+            default -> null;
+        };
+    }
+
+    public Room getRoom(int row, int col) {
+        if (row >= 0 && row < SIZE && col >= 0 && col < SIZE) {
+            return rooms[row][col];
+        }
+        return null;
+    }
+
+
+
 
 }
 
