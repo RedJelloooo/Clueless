@@ -139,44 +139,6 @@ public class GameBoard {
         return true;
     }
 
-//    public boolean movePlayer(String playerId, int targetRow, int targetCol) {
-//        PlayerState player = playerPositions.get(playerId);
-//        if (player == null) {
-//            System.out.println("No player found with ID: " + playerId);
-//            return false;
-//        }
-//
-//        int currentRow = player.getRow();
-//        int currentCol = player.getCol();
-//        System.out.printf("Player at (%d,%d), attempting to move to (%d,%d)\n", currentRow, currentCol, targetRow, targetCol);
-//
-//        Hallway attemptedPath = new Hallway(currentRow, currentCol, targetRow, targetCol);
-//        if (!hallways.contains(attemptedPath)) {
-//            System.out.println("Invalid hallway: " + attemptedPath);
-//            return false;
-//        }
-//
-//        Room targetRoom = rooms[targetRow][targetCol];
-//        if (targetRoom == null) {
-//            System.out.println("Target room is null at: (" + targetRow + "," + targetCol + ")");
-//            return false;
-//        }
-//
-//        if (targetRoom.isOccupied()) {
-//            System.out.println("Target room is occupied: " + targetRoom.getName());
-//            return false;
-//        }
-//
-//        rooms[currentRow][currentCol].setOccupied(false);
-//        targetRoom.setOccupied(true);
-//        player.setPosition(targetRow, targetCol);
-//
-//        System.out.println("Player moved successfully to: (" + targetRow + "," + targetCol + ")");
-//        return true;
-//    }
-
-
-
 
     public Room getRoom(String playerId) {
         PlayerState player = playerPositions.get(playerId);

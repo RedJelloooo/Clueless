@@ -910,45 +910,53 @@ public class Client extends JFrame {
         gameLogo.setVisible(false);
     }
 
-
-
     private void updateBoard(String playerName, int row, int col) {
-        // Clear all previous player tags but preserve base room name
+        // Clear all previous player tags
         for (int r = 0; r < BOARD_SIZE; r++) {
             for (int c = 0; c < BOARD_SIZE; c++) {
                 JLabel label = boardLabels[r][c];
                 if (label != null && label.getText() != null && label.getText().contains("(")) {
-                    int idx = label.getText().indexOf(" (");
-                    label.setText(label.getText().substring(0, idx));
+                    String text = label.getText();
+                    if (text.contains("<br>")) {
+                        // HTML format (room)
+                        text = text.substring(0, text.indexOf("<br>"));
+                        label.setText(text);
+                    } else if (text.contains(" (")) {
+                        // Plain format (hallway)
+                        label.setText(text.substring(0, text.indexOf(" (")));
+                    }
                 }
             }
         }
 
-        // Add this player to the current tile's text
         JLabel current = boardLabels[row][col];
         if (current == null) return;
 
-        String baseText = current.getText() == null ? "" : current.getText();
-        String currentTag = getInitials(playerName);
+        String initials = getInitials(playerName);
+        String tooltip = current.getToolTipText();
 
-        // Check if label already has any player initials
-        if (baseText.contains("(")) {
-            // shouldn't happen since we clear above, but just in case
-            baseText = baseText.substring(0, baseText.indexOf(" ("));
-        }
-
-        String newText = current.getText();
-        if (newText != null && newText.contains("(")) {
-            // Append to existing initials
-            String existingInitials = newText.substring(newText.indexOf("(") + 1, newText.indexOf(")"));
-            Set<String> initials = new HashSet<>(Arrays.asList(existingInitials.split(", ")));
-            initials.add(currentTag); // avoid duplicates
-
-            String joined = String.join(", ", initials);
-            current.setText(baseText + " (" + joined + ")");
+        if ("Hallway".equals(tooltip)) {
+            // Inline initials for hallway
+            String base = current.getText() != null ? current.getText().split(" ")[0] : "Hallway";
+            current.setText(base + " (" + initials + ")");
         } else {
-            // First tag
-            current.setText(baseText + " (" + currentTag + ")");
+            // Show initials below the room name using HTML
+            String existing = current.getText();
+            String roomName = existing.contains("<br>") ? existing.substring(0, existing.indexOf("<br>")) : existing;
+            String initialLine = existing.contains("<br>") ? existing.substring(existing.indexOf("<br>") + 4) : "";
+
+
+            Set<String> initialsSet = new HashSet<>();
+            for (String s : initialLine.replace("(", "").replace(")", "").split(", ")) {
+                if (!s.trim().isEmpty()) {
+                    initialsSet.add(s.trim());
+                }
+            }
+            initialsSet.add(initials);
+
+            String joinedInitials = String.join(", ", initialsSet);
+
+            current.setText("<html><center>" + roomName + "<br>(" + joinedInitials + ")</center></html>");
         }
     }
 
