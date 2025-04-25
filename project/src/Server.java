@@ -179,6 +179,7 @@ public class Server extends JFrame {
                             if (start == null) {
                                 output.writeObject("FAILED JOIN: Unknown character");
                                 output.flush();
+                                broadcastPlayerPositions(); // TODO maybe delete if errors start occurring
                                 continue;
                             }
 
@@ -242,6 +243,11 @@ public class Server extends JFrame {
                                 if (canMove) {
                                     boolean moved = gameBoard.movePlayer(characterName, newRow, newCol);
                                     output.writeObject("MOVED " + moved + " to (" + newRow + "," + newCol + ")");
+                                    if (moved) {
+                                        broadcastPlayerPositions();
+                                    }
+
+
                                 } else {
                                     output.writeObject("MOVED false (Illegal move in direction: " + direction + ")");
                                 }
@@ -351,7 +357,7 @@ public class Server extends JFrame {
                                     output.flush();
                                     System.out.println("Suggestion could not be disproved.");
                                 }
-
+                                broadcastPlayerPositions(); // ✅ To reflect suspect movement to all players
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                                 output.writeObject("ERROR Could not process suggestion.");
@@ -437,6 +443,8 @@ public class Server extends JFrame {
                                 broadcast(characterName + " made an incorrect accusation and is eliminated from the game.");
                                 System.out.println(characterName + " has been eliminated.");
                                 // Optional: disable further actions from this player
+
+                                broadcastPlayerPositions(); // ✅ Optional: useful to reflect position if needed
                             }
 
                             continue; // skip to next command
