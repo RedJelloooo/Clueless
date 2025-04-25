@@ -647,17 +647,49 @@ public class Client extends JFrame {
                 if (message.startsWith("ERROR")) {
                     JOptionPane.showMessageDialog(this, message, "Game Error", JOptionPane.ERROR_MESSAGE);
                 }
+//                 TODO delete this added new code below so all players can be added to the board Delete this after texting
+//                if (message.startsWith("ALL_POSITIONS")) {
+//                    String[] parts = message.split(" ");
+//                    for (int i = 1; i < parts.length; i++) {
+//                        String[] tokens = parts[i].split(",");
+//                        String name = tokens[0];
+//                        int row = Integer.parseInt(tokens[1]);
+//                        int col = Integer.parseInt(tokens[2]);
+//                        updateBoard(name, row, col);  // This already handles initials + display logic
+//                    }
+//                }
+//                 TODO delete this added new code below so all players can be added to the board Delete this after texting
 
                 if (message.startsWith("ALL_POSITIONS")) {
+                    // First, clear all initials from the board
+                    for (int r = 0; r < BOARD_SIZE; r++) {
+                        for (int c = 0; c < BOARD_SIZE; c++) {
+                            JLabel label = boardLabels[r][c];
+                            if (label != null && label.getText() != null && label.getText().contains("(")) {
+                                String text = label.getText();
+                                if (text.contains("<br>")) {
+                                    // HTML format (room)
+                                    text = text.substring(0, text.indexOf("<br>"));
+                                    label.setText(text);
+                                } else if (text.contains(" (")) {
+                                    // Plain format (hallway)
+                                    label.setText(text.substring(0, text.indexOf(" (")));
+                                }
+                            }
+                        }
+                    }
+
+                    // Then, re-add every player properly
                     String[] parts = message.split(" ");
                     for (int i = 1; i < parts.length; i++) {
                         String[] tokens = parts[i].split(",");
-                        String name = tokens[0];
+                        String playerName = tokens[0];
                         int row = Integer.parseInt(tokens[1]);
                         int col = Integer.parseInt(tokens[2]);
-                        updateBoard(name, row, col);  // This already handles initials + display logic
+                        updateBoard(playerName, row, col);  // ✅ use the correct playerName
                     }
                 }
+
 
 
 
@@ -951,22 +983,24 @@ public class Client extends JFrame {
 
     private void updateBoard(String playerName, int row, int col) {
         // Clear all previous player tags
-        for (int r = 0; r < BOARD_SIZE; r++) {
-            for (int c = 0; c < BOARD_SIZE; c++) {
-                JLabel label = boardLabels[r][c];
-                if (label != null && label.getText() != null && label.getText().contains("(")) {
-                    String text = label.getText();
-                    if (text.contains("<br>")) {
-                        // HTML format (room)
-                        text = text.substring(0, text.indexOf("<br>"));
-                        label.setText(text);
-                    } else if (text.contains(" (")) {
-                        // Plain format (hallway)
-                        label.setText(text.substring(0, text.indexOf(" (")));
-                    }
-                }
-            }
-        }
+        //TODO delete this this extra code was not necessary it was clearing out the board and only showing one player.
+//        for (int r = 0; r < BOARD_SIZE; r++) {
+//            for (int c = 0; c < BOARD_SIZE; c++) {
+//                JLabel label = boardLabels[r][c];
+//                if (label != null && label.getText() != null && label.getText().contains("(")) {
+//                    String text = label.getText();
+//                    if (text.contains("<br>")) {
+//                        // HTML format (room)
+//                        text = text.substring(0, text.indexOf("<br>"));
+//                        label.setText(text);
+//                    } else if (text.contains(" (")) {
+//                        // Plain format (hallway)
+//                        label.setText(text.substring(0, text.indexOf(" (")));
+//                    }
+//                }
+//            }
+//        }
+        //TODO delete this code.
 
         JLabel current = boardLabels[row][col];
         if (current == null) return;
