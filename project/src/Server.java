@@ -452,15 +452,32 @@ public class Server extends JFrame {
                                 continue;
                             }
 
-                            System.out.println("Where recevied");
-                            Room room = gameBoard.getRoom(characterName);
-                            if (room != null) {
-                                output.writeObject("LOCATION " + room.getName() + " [" + room.getRow() + "," + room.getCol() + "]");
-                            } else {
-                                output.writeObject("LOCATION Unknown");
-                            }
+                            // Instead of just this:
+                            // Room room = gameBoard.getRoom(characterName);
+                            // output.writeObject("LOCATION " + room.getName() + " [" + room.getRow() + "," + room.getCol() + "]");
+
+                            // Do this:
+                            broadcastPlayerPositions();  // Re-send everyone’s positions
+                            output.writeObject("LOCATION Sent all player positions.");
                             output.flush();
                         }
+
+//                        if (clientCommand.equals("WHERE")) {
+//                            if (eliminated) {
+//                                output.writeObject("ERROR You are eliminated and cannot check location.");
+//                                output.flush();
+//                                continue;
+//                            }
+//
+//                            System.out.println("Where recevied");
+//                            Room room = gameBoard.getRoom(characterName);
+//                            if (room != null) {
+//                                output.writeObject("LOCATION " + room.getName() + " [" + room.getRow() + "," + room.getCol() + "]");
+//                            } else {
+//                                output.writeObject("LOCATION Unknown");
+//                            }
+//                            output.flush();
+//                        }
 
                         // other commands...
                         if (clientCommand.equals(Commands.PLAYER_JOINED.toString())) {
