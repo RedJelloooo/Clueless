@@ -69,7 +69,9 @@ public class Client extends JFrame {
     private final JButton chooseName;
     private final JButton displayRules;
     private JScrollPane scrollPane;
-    private JButton whereAmIButton;
+    //TODO delete after testing
+//    private JButton whereAmIButton;
+    //TODO delete after testing
     private JButton secretPassageButton;
     private final JButton makeSuggestionButton = new JButton("Make Suggestion");
     private final JButton makeAccusationButton = new JButton("Make Accusation");
@@ -164,10 +166,12 @@ public class Client extends JFrame {
 
         textField.setEditable(true);
 
-        whereAmIButton = new JButton("Where Am I?");
-        whereAmIButton.setBounds(600, 340, 150, 25);
-        whereAmIButton.setVisible(true);
-        add(whereAmIButton);
+        //TODO delete after testing
+//        whereAmIButton = new JButton("Where Am I?");
+//        whereAmIButton.setBounds(600, 340, 150, 25);
+//        whereAmIButton.setVisible(true);
+//        add(whereAmIButton);
+        //TODO delete after testing
 
         JButton upButton = new JButton("Up");
         upButton.setBounds(25, 400, 100, 25);
@@ -218,11 +222,12 @@ public class Client extends JFrame {
             sendData("MOVE_DIRECTION RIGHT");
         });
 
-        whereAmIButton.addActionListener(e -> {
-            System.out.println("Sending command: WHERE");
-            sendData("WHERE");
-        });
-
+        //TODO delete after testing
+//        whereAmIButton.addActionListener(e -> {
+//            System.out.println("Sending command: WHERE");
+//            sendData("WHERE");
+//        });
+        //TODO delete after testing
 
 
 

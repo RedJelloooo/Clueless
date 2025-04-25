@@ -96,8 +96,6 @@ public class GameBoard {
         return true;
     }
 
-
-
     //TODO for debugging
     public boolean movePlayer(String playerId, int targetRow, int targetCol) {
         PlayerState player = playerPositions.get(playerId);
@@ -230,12 +228,12 @@ public class GameBoard {
             return false;
         }
 
-        // Check occupancy
-//        if (rooms[newRow][newCol].isOccupied())
-        if (getRoom(newRow, newCol).isOccupied()) {
-            System.out.printf("Target square (%d,%d) is occupied%n", newRow, newCol);
+        Room targetRoom = getRoom(newRow, newCol);
+        if (targetRoom.getName().equals("Hallway") && targetRoom.isOccupied()) {
+            System.out.printf("Target hallway (%d,%d) is occupied%n", newRow, newCol);
             return false;
         }
+
 
         return true;
     }
