@@ -17,6 +17,8 @@ import java.util.Objects;
 import java.util.Set;
 import javax.sound.sampled.*;
 import javax.swing.*;
+import java.awt.Point;
+
 
 /**
  * @author Brandon Cano (Server and Client Logic)
@@ -38,6 +40,17 @@ public class Client extends JFrame {
     private final Set<String> wordsGuessed = new HashSet<>();
     private String message = "";
     private JComboBox<String> characterDropdown;
+    private final Set<Point> secretPassageRooms = Set.of(
+            new Point(0, 0), // Study
+            new Point(0, 4), // Lounge
+            new Point(4, 0), // Conservatory
+            new Point(4, 4)  // Kitchen
+    );
+    private int currentPlayerRow = -1;
+    private int currentPlayerCol = -1;
+
+
+
 
     // GUI components
     private JPanel boardPanel;
@@ -57,6 +70,7 @@ public class Client extends JFrame {
     private final JButton displayRules;
     private JScrollPane scrollPane;
     private JButton whereAmIButton;
+    private JButton secretPassageButton;
     private final JButton makeSuggestionButton = new JButton("Make Suggestion");
     private final JButton makeAccusationButton = new JButton("Make Accusation");
 
@@ -72,6 +86,7 @@ public class Client extends JFrame {
     private JLabel gameLogo;
     private JLabel menu;
     private JLabel rules;
+
 
     private final JTextField enterName;
 
@@ -170,7 +185,8 @@ public class Client extends JFrame {
         rightButton.setBounds(25, 490, 100, 25);
         add(rightButton);
 
-        JButton secretPassageButton = new JButton("Secret Passage");
+//        JButton secretPassageButton = new JButton("Secret Passage");
+        secretPassageButton = new JButton("Secret Passage");
         secretPassageButton.setBounds(25, 520, 100, 25);  // adjust position if needed
         add(secretPassageButton);
 
@@ -957,6 +973,15 @@ public class Client extends JFrame {
 
         String initials = getInitials(playerName);
         String tooltip = current.getToolTipText();
+
+        if (playerName.equals(name)) {
+            currentPlayerRow = row;
+            currentPlayerCol = col;
+
+            boolean inSecretPassageRoom = secretPassageRooms.contains(new Point(row, col));
+            secretPassageButton.setEnabled(inSecretPassageRoom);
+        }
+
 
         if ("Hallway".equals(tooltip)) {
             // Inline initials for hallway
