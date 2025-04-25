@@ -639,8 +639,12 @@ public class Client extends JFrame {
                     JOptionPane.showMessageDialog(this, message, "Location", JOptionPane.INFORMATION_MESSAGE);
                 }
 
-
-                if (message.startsWith("MOVED")) {
+                //TODO delete after testing
+//                if (message.startsWith("MOVED")) {
+//                    JOptionPane.showMessageDialog(this, message, "Move Result", JOptionPane.INFORMATION_MESSAGE);
+//                }
+                //TODO delete after testing
+                if (message.startsWith("MOVED false")) {
                     JOptionPane.showMessageDialog(this, message, "Move Result", JOptionPane.INFORMATION_MESSAGE);
                 }
 
