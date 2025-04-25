@@ -96,22 +96,6 @@ public class GameBoard {
     }
 
 
-//public boolean addPlayer(String playerId, String characterName, int row, int col) {
-//    Room room = rooms[row][col];
-//    if (room == null) return false;
-//
-//    if (room.getName().equals("Hallway") && room.isOccupied()) {
-//        return false; // Hallways can only have one player
-//    }
-//
-//    PlayerState player = new PlayerState(playerId, characterName, row, col);
-//    playerPositions.put(playerId, player);
-//    room.addOccupant(playerId);
-//    return true;
-//}
-//TODO delete up
-
-
 
     //TODO for debugging
     public boolean movePlayer(String playerId, int targetRow, int targetCol) {
@@ -210,16 +194,36 @@ public class GameBoard {
     public void printBoardDebug() {
         for (int r = 0; r < SIZE; r++) {
             for (int c = 0; c < SIZE; c++) {
-                if (rooms[r][c] != null) {
-                    String occupant = rooms[r][c].isOccupied() ? "X" : " ";
-                    System.out.print("[" + rooms[r][c].getName().charAt(0) + occupant + "]");
+                Room room = rooms[r][c];
+                if (room != null) {
+                    Set<String> occupants = room.getOccupants();
+
+                    String tag;
+                    if (occupants.isEmpty()) {
+                        tag = "   ";
+                    } else {
+                        // Build a compact initials string (e.g. MS, PP)
+                        StringBuilder sb = new StringBuilder();
+                        for (String playerId : occupants) {
+                            String[] parts = playerId.split("(?=[A-Z])");
+                            for (String part : parts) {
+                                if (!part.isEmpty()) sb.append(part.charAt(0));
+                            }
+                            sb.append(',');
+                        }
+                        sb.setLength(Math.min(3, sb.length())); // Truncate to max 3 chars
+                        tag = sb.toString();
+                    }
+
+                    System.out.printf("[%s]", tag);
                 } else {
-                    System.out.print("[  ]");
+                    System.out.print("[   ]");
                 }
             }
             System.out.println();
         }
     }
+
 
     public boolean canMove(String playerId, String direction) {
         PlayerState player = playerPositions.get(playerId);
