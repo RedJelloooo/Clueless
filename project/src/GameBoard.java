@@ -79,7 +79,8 @@ public class GameBoard {
         }
     }
     public boolean addPlayer(String playerId, String characterName, int row, int col) {
-        Room room = rooms[row][col];
+//        Room room = rooms[row][col];
+        Room room = getRoom(row, col);
         if (room == null) return false;
 
         // Restrict hallways to one player
@@ -115,8 +116,11 @@ public class GameBoard {
             return false;
         }
 
-        Room currentRoom = rooms[currentRow][currentCol];
-        Room targetRoom = rooms[targetRow][targetCol];
+//        Room currentRoom = rooms[currentRow][currentCol];
+//        Room targetRoom = rooms[targetRow][targetCol];
+        Room currentRoom = getRoom(currentRow, currentCol);
+        Room targetRoom = getRoom(targetRow, targetCol);
+
         if (targetRoom == null) {
             System.out.println("Target room is null at: (" + targetRow + "," + targetCol + ")");
             return false;
@@ -213,7 +217,8 @@ public class GameBoard {
         }
 
         // Check if there's a room or hallway
-        if (rooms[newRow][newCol] == null) {
+//        if (rooms[newRow][newCol] == null)
+        if (getRoom(newRow, newCol) == null) {
             System.out.printf("No room at (%d,%d)%n", newRow, newCol);
             return false;
         }
@@ -226,7 +231,8 @@ public class GameBoard {
         }
 
         // Check occupancy
-        if (rooms[newRow][newCol].isOccupied()) {
+//        if (rooms[newRow][newCol].isOccupied())
+        if (getRoom(newRow, newCol).isOccupied()) {
             System.out.printf("Target square (%d,%d) is occupied%n", newRow, newCol);
             return false;
         }
