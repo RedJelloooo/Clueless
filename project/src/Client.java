@@ -170,6 +170,17 @@ public class Client extends JFrame {
         rightButton.setBounds(25, 490, 100, 25);
         add(rightButton);
 
+        JButton secretPassageButton = new JButton("Secret Passage");
+        secretPassageButton.setBounds(25, 520, 100, 25);  // adjust position if needed
+        add(secretPassageButton);
+
+        secretPassageButton.addActionListener(e -> {
+            System.out.println("Sending command: SECRET_PASSAGE");
+            sendData("SECRET_PASSAGE");
+        });
+
+
+
         System.out.println("Sending move command: MOVE_DIRECTION UP");
 
 
