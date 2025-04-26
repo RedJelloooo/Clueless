@@ -262,6 +262,11 @@ public class GameBoard {
         }
         return null;
     }
+    public String getSolutionCharacter() { return solutionCharacter; }
+    public String getSolutionWeapon() { return solutionWeapon; }
+    public String getSolutionRoom() { return solutionRoom; }
+
+
 }
 
 

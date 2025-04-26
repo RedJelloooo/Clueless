@@ -3,8 +3,7 @@ import util.Score;
 import util.TournamentScoreboard;
 import util.WordFile;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 import javax.swing.*;
@@ -13,7 +12,6 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.awt.Point;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -28,6 +26,7 @@ public class Server extends JFrame {
 
     private final GameBoard gameBoard = new GameBoard();
     private int playerCount = 0;
+    private boolean cardsDealt = false;
     private final static int MAX_PLAYERS = 16; //can possibly get rid of this
     private final JTextArea displayArea;
     private ServerSocket server;
@@ -180,6 +179,7 @@ public class Server extends JFrame {
                                 output.writeObject("FAILED JOIN: Unknown character");
                                 output.flush();
                                 broadcastPlayerPositions(); // TODO maybe delete if errors start occurring
+
                                 continue;
                             }
 
@@ -193,6 +193,12 @@ public class Server extends JFrame {
                             }
                             output.flush();
                             broadcastPlayerPositions();  // <-- NEW: update all clients with everyone's positions
+                            if (!cardsDealt && players.size() >= 2) { // TODO or >= 3 or >= 6 if you want full table
+                                dealCardsToPlayers();
+                                cardsDealt = true;
+                            }
+
+
                         }
 
 
@@ -563,6 +569,56 @@ public class Server extends JFrame {
             }
         }
     }
+
+    private void dealCardsToPlayers() {
+        List<String> deck = new ArrayList<>();
+
+        // Add all possible cards
+        deck.addAll(Arrays.asList(
+                "MissScarlet", "ColonelMustard", "MrsWhite",
+                "MrGreen", "MrsPeacock", "ProfessorPlum"
+        ));
+        deck.addAll(Arrays.asList(
+                "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
+        ));
+        deck.addAll(Arrays.asList(
+                "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+                "Conservatory", "Ballroom", "Kitchen"
+        ));
+
+        // Remove the solution cards
+        deck.remove(gameBoard.getSolutionCharacter());
+        deck.remove(gameBoard.getSolutionWeapon());
+        deck.remove(gameBoard.getSolutionRoom());
+
+        // Shuffle the deck
+        Collections.shuffle(deck);
+
+        // Deal cards round-robin
+        int playerIndex = 0;
+        for (String card : deck) {
+            Player player = players.get(playerIndex);
+            PlayerState playerState = gameBoard.getPlayerState(player.characterName);
+            if (playerState != null) {
+                playerState.addCard(card);
+            }
+            playerIndex = (playerIndex + 1) % players.size();
+        }
+
+        // OPTIONAL: notify each player of their cards
+        for (Player p : players) {
+            try {
+                PlayerState ps = gameBoard.getPlayerState(p.characterName);
+                if (ps != null) {
+                    p.output.writeObject("YOUR_CARDS " + ps.getCards());
+                    p.output.flush();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 
 

@@ -48,6 +48,7 @@ public class Client extends JFrame {
     );
     private int currentPlayerRow = -1;
     private int currentPlayerCol = -1;
+    private String myCards = "";
 
 
 
@@ -384,6 +385,15 @@ public class Client extends JFrame {
             }
         });
 
+        myCardsButton.addActionListener(e -> {
+            if (myCards.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "You have no cards yet!", "My Cards", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Your cards are:\n" + myCards, "My Cards", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+
 
 
         URL menuImage = getClass().getResource("menu.png");
@@ -666,6 +676,21 @@ public class Client extends JFrame {
                         updateBoard(playerName, row, col);  // ✅ use the correct playerName
                     }
                 }
+
+//                if (message.startsWith("YOUR_CARDS")) {
+//                    // Example message: "YOUR_CARDS [MissScarlet, Rope, Lounge]"
+//                    String cardsList = message.substring("YOUR_CARDS".length()).trim();
+//                    JOptionPane.showMessageDialog(this, "Your cards are:\n" + cardsList,
+//                            "Your Cards", JOptionPane.INFORMATION_MESSAGE);
+//                }
+                if (message.startsWith("YOUR_CARDS")) {
+                    String cardsList = message.substring("YOUR_CARDS".length()).trim();
+                    myCards = cardsList; // Save the cards for later
+                    JOptionPane.showMessageDialog(this, "Your cards are:\n" + cardsList,
+                            "Your Cards", JOptionPane.INFORMATION_MESSAGE);
+                }
+
+
 
 
 
