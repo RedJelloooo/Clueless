@@ -262,7 +262,8 @@ public class Client extends JFrame {
             }
         }
 
-//        add(boardPanel);
+        add(boardPanel);
+        boardPanel.setVisible(false);
 
 
         URL rulesURL = getClass().getResource("rules.png");
@@ -318,7 +319,7 @@ public class Client extends JFrame {
             String selected = (String) characterDropdown.getSelectedItem();
             name = selected;
             sendData("JOIN " + selected);
-            add(boardPanel);
+           boardPanel.setVisible(true); // ✅
         });
 
 
