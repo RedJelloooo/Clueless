@@ -16,6 +16,7 @@ import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.Point;
+import java.util.List;
 
 
 /**
@@ -154,7 +155,8 @@ public class Client extends JFrame {
         skinsButton = new JButton();
         chooseName = new JButton();
         displayRules = new JButton();
-        detectiveNotePad = new JButton();
+        detectiveNotePad.setToolTipText("View all clues you've collected from players!");
+
 
         timeRemainingLabel = new JLabel(seconds + " seconds remaining!");
         currentRoundLabel = new JLabel("Round " + clientRound);
@@ -396,18 +398,67 @@ public class Client extends JFrame {
             }
         });
 
+//        detectiveNotePad.addActionListener(e -> {
+//            if (detectiveNotes.isEmpty()) {
+//                JOptionPane.showMessageDialog(this, "You have no notes yet!", "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
+//            } else {
+//                StringBuilder notesBuilder = new StringBuilder();
+//                for (String note : detectiveNotes) {
+//                    notesBuilder.append(note).append("\n");
+//                }
+//                JOptionPane.showMessageDialog(this, "Detective Notes:\n" + notesBuilder.toString(),
+//                        "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
+//            }
+//        });
         detectiveNotePad.addActionListener(e -> {
             if (detectiveNotes.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "You have no notes yet!", "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                StringBuilder notesBuilder = new StringBuilder();
+                // Create lists to organize
+                List<String> suspects = new ArrayList<>();
+                List<String> weapons = new ArrayList<>();
+                List<String> rooms = new ArrayList<>();
+
                 for (String note : detectiveNotes) {
-                    notesBuilder.append(note).append("\n");
+                    // Split into who showed what
+                    String[] parts = note.split(":");
+                    if (parts.length != 2) continue; // skip bad formats
+
+                    String player = parts[0].trim();
+                    String card = parts[1].trim();
+
+                    // Classify based on card name
+                    if (isSuspect(card)) {
+                        suspects.add(player + " showed: " + card);
+                    } else if (isWeapon(card)) {
+                        weapons.add(player + " showed: " + card);
+                    } else if (isRoom(card)) {
+                        rooms.add(player + " showed: " + card);
+                    }
                 }
-                JOptionPane.showMessageDialog(this, "Detective Notes:\n" + notesBuilder.toString(),
-                        "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
+
+                // Build the full detective notebook text
+                StringBuilder notesBuilder = new StringBuilder();
+                notesBuilder.append("🔎 Suspects:\n");
+                for (String s : suspects) {
+                    notesBuilder.append("• ").append(s).append("\n");
+                }
+                notesBuilder.append("\n🔪 Weapons:\n");
+                for (String w : weapons) {
+                    notesBuilder.append("• ").append(w).append("\n");
+                }
+                notesBuilder.append("\n🏰 Rooms:\n");
+                for (String r : rooms) {
+                    notesBuilder.append("• ").append(r).append("\n");
+                }
+
+                JOptionPane.showMessageDialog(this,
+                        notesBuilder.toString(),
+                        "Detective Notepad",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
         });
+
 
 
 
@@ -1169,6 +1220,22 @@ public class Client extends JFrame {
         }
         return initials.toString().toUpperCase();
     }
+
+    private boolean isSuspect(String card) {
+        return Arrays.asList("MissScarlet", "ColonelMustard", "MrsWhite", "MrGreen", "MrsPeacock", "ProfessorPlum")
+                .contains(card);
+    }
+
+    private boolean isWeapon(String card) {
+        return Arrays.asList("Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench")
+                .contains(card);
+    }
+
+    private boolean isRoom(String card) {
+        return Arrays.asList("Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room", "Conservatory", "Ballroom", "Kitchen")
+                .contains(card);
+    }
+
 
 
 //TODO Make sure disconnects or eliminations (like bad accusations) correctly skip turns later — we'll handle that after basic turns are working.
