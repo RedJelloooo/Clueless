@@ -319,7 +319,9 @@ public class Client extends JFrame {
             String selected = (String) characterDropdown.getSelectedItem();
             name = selected;
             sendData("JOIN " + selected);
-           boardPanel.setVisible(true); // ✅
+            myCardsButton.setVisible(true);
+            detectiveNotePad.setVisible(true);
+           boardPanel.setVisible(true); //
         });
 
 
@@ -489,6 +491,8 @@ public class Client extends JFrame {
             chooseName.setVisible(false);
             displayRules.setVisible(false);
             rules.setVisible(true);
+            myCardsButton.setVisible(true);
+            detectiveNotePad.setVisible(true);
 
             if (rules != null && rules.getIcon() instanceof ImageIcon imageIcon) {
                 int imageWidth = imageIcon.getIconWidth();
@@ -515,7 +519,8 @@ public class Client extends JFrame {
             exitFromGameToMainMenuButton.setBounds(620, 500, 150, 50);
 
             audioEnabler();
-
+            myCardsButton.setVisible(true);
+            detectiveNotePad.setVisible(true);
             exitFromGameToMainMenuButton.setVisible(true);
             exitTheApplicationButton.setVisible(false);
             joinTheTournamentButton.setVisible(false);
@@ -821,6 +826,8 @@ public class Client extends JFrame {
      */
     private void mainMenuInitialize() {
 //        rules.setVisible(false);
+        myCardsButton.setVisible(true);
+        detectiveNotePad.setVisible(true);
         scrollPane.setVisible(false);
         displayRules.setVisible(true);
         menu.setVisible(true);
@@ -846,8 +853,6 @@ public class Client extends JFrame {
         gameLogo.setVisible(false);
         gameLogo.setVisible(false);
         display.setVisible(true);
-        myCardsButton.setVisible(true);
-        detectiveNotePad.setVisible(true);
         if (scrollPane != null) scrollPane.setVisible(false);
     }
 
@@ -989,8 +994,11 @@ public class Client extends JFrame {
 
     private void hideAllScreens() {
         menu.setVisible(false);
+        myCardsButton.setVisible(true);
+        detectiveNotePad.setVisible(true);
         gameBackgroundLabel.setVisible(false);
         display.setVisible(false);
+
         if (scrollPane != null) scrollPane.setVisible(false);
         gameLogo.setVisible(false);
     }
