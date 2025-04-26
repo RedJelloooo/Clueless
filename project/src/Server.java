@@ -365,10 +365,18 @@ public class Server extends JFrame {
                                         leftPlayer.output.writeObject("DISPROVE_OPTIONS " + String.join(",", matches));
                                         leftPlayer.output.flush();
                                     } else {
-                                        // Broadcast to everyone that left player cannot disprove
+                                        broadcast("SUGGESTION_NOT_DISPROVED_BY_PREVIOUS"); // NEW LINE
                                         broadcast(leftPlayer.characterName + " cannot disprove the suggestion.");
                                         nextTurn(); // Move to next player's turn
                                     }
+//
+//                                    else {
+//
+//                                        // Broadcast to everyone that left player cannot disprove
+//                                        broadcast(leftPlayer.characterName + " cannot disprove the suggestion.");
+//                                        nextTurn(); // Move to next player's turn
+//                                    }
+
                                 }
 
 //                                // TODO: In future - notify other players to disprove

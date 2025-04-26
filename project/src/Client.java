@@ -737,8 +737,12 @@ public class Client extends JFrame {
                     secretPassageButton.setEnabled(true);
                 }
 
-
-
+                if (message.equals("SUGGESTION_NOT_DISPROVED_BY_PREVIOUS")) {
+                    JOptionPane.showMessageDialog(this,
+                            "The player before you could not disprove your suggestion.",
+                            "Suggestion Not Disproved",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
 
 
                 //  NEW: Handle custom game messages from Clue-Less server
