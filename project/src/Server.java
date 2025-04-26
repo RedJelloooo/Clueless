@@ -453,6 +453,19 @@ public class Server extends JFrame {
                         }
 
 
+//                        if (clientCommand.startsWith("DISPROVE_SELECTED")) {
+//                            String cardShown = clientCommand.split(" ", 2)[1];
+//
+//                            broadcast(characterName + " disproved the suggestion by showing a card.");
+//
+//                            Player suggester = findPlayerByName(lastSuggester);
+//                            if (suggester != null) {
+//                                suggester.output.writeObject(characterName + " showed you: " + cardShown);
+//                                suggester.output.flush();
+//                            }
+//
+//                            nextTurn(); // Move to next player
+//                        }
                         if (clientCommand.startsWith("DISPROVE_SELECTED")) {
                             String cardShown = clientCommand.split(" ", 2)[1];
 
@@ -462,10 +475,15 @@ public class Server extends JFrame {
                             if (suggester != null) {
                                 suggester.output.writeObject(characterName + " showed you: " + cardShown);
                                 suggester.output.flush();
+
+                                // IMPORTANT: Give suggester the choice AFTER disproof
+                                suggester.output.writeObject("PROMPT_ACCUSATION_OR_END");
+                                suggester.output.flush();
                             }
 
-                            nextTurn(); // Move to next player
+                            // Do NOT nextTurn() yet - wait for suggester to either accuse or end turn!
                         }
+
 
 
 
