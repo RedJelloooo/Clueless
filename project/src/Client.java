@@ -814,11 +814,18 @@ public class Client extends JFrame {
                 }
 
 
+//                if (message.equals("PROMPT_SUGGESTION")) {
+//                    SwingUtilities.invokeLater(() -> {
+//                        makeSuggestionButton.doClick();
+//                    });
+//                }
                 if (message.equals("PROMPT_SUGGESTION")) {
                     SwingUtilities.invokeLater(() -> {
-                        makeSuggestionButton.doClick();
+                        detectiveNotePad.doClick(); // <-- open Detective Notepad automatically
+                        makeSuggestionButton.doClick(); // <-- then pop the Suggestion menu
                     });
                 }
+
 
 
                 if (message.equals("SUGGESTION_NOT_DISPROVED_BY_PREVIOUS")) {
@@ -952,21 +959,41 @@ public class Client extends JFrame {
 
 
 
+//                if (message.startsWith("DISPROVE_OPTIONS")) {
+//                    String[] options = message.substring("DISPROVE_OPTIONS".length()).trim().split(",");
+//                    String selectedCard = (String) JOptionPane.showInputDialog(
+//                            this,
+//                            "Choose a card to disprove the suggestion:",
+//                            "Disprove Suggestion",
+//                            JOptionPane.PLAIN_MESSAGE,
+//                            null,
+//                            options,
+//                            options[0]
+//                    );
+//                    if (selectedCard != null) {
+//                        sendData("DISPROVE_SELECTED " + selectedCard);
+//                    }
+//                }
                 if (message.startsWith("DISPROVE_OPTIONS")) {
-                    String[] options = message.substring("DISPROVE_OPTIONS".length()).trim().split(",");
-                    String selectedCard = (String) JOptionPane.showInputDialog(
-                            this,
-                            "Choose a card to disprove the suggestion:",
-                            "Disprove Suggestion",
-                            JOptionPane.PLAIN_MESSAGE,
-                            null,
-                            options,
-                            options[0]
-                    );
-                    if (selectedCard != null) {
-                        sendData("DISPROVE_SELECTED " + selectedCard);
-                    }
+                    SwingUtilities.invokeLater(() -> {
+                        detectiveNotePad.doClick(); // <-- pop open the Detective Notes first
+
+                        String[] options = message.substring("DISPROVE_OPTIONS".length()).trim().split(",");
+                        String selectedCard = (String) JOptionPane.showInputDialog(
+                                this,
+                                "Choose a card to disprove the suggestion:",
+                                "Disprove Suggestion",
+                                JOptionPane.PLAIN_MESSAGE,
+                                null,
+                                options,
+                                options[0]
+                        );
+                        if (selectedCard != null) {
+                            sendData("DISPROVE_SELECTED " + selectedCard);
+                        }
+                    });
                 }
+
 
 
 
