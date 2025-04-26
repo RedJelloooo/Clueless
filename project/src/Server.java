@@ -264,9 +264,9 @@ public class Server extends JFrame {
                                         if (newRoom != null && !newRoom.getName().equals("Hallway")) {
                                             output.writeObject("PROMPT_SUGGESTION");
                                             output.flush();
+                                        }else {
+                                            nextTurn();
                                         }
-
-                                        nextTurn();
                                     }
 
 //                                    if (moved) {
