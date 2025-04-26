@@ -624,9 +624,48 @@ public class Client extends JFrame {
                     application.setVisible(true);
                 }
 
-                if (message.startsWith("You WON!") || message.startsWith("Your accusation was incorrect")) {
-                    JOptionPane.showMessageDialog(this, message, "Accusation Result", JOptionPane.INFORMATION_MESSAGE);
+//                if (message.startsWith("You WON!") || message.startsWith("Your accusation was incorrect")) {
+//                    JOptionPane.showMessageDialog(this, message, "Accusation Result", JOptionPane.INFORMATION_MESSAGE);
+//                }
+
+                if (message.startsWith("You WON!")) {
+                    JOptionPane.showMessageDialog(this, message, "🎉 You Won the Game!", JOptionPane.INFORMATION_MESSAGE);
+
+                    // Disable buttons because game is over
+                    makeSuggestionButton.setEnabled(false);
+                    makeAccusationButton.setEnabled(false);
+                    secretPassageButton.setEnabled(false);
+
+
+                    int response = JOptionPane.showConfirmDialog(
+                            this,
+                            "Would you like to play again?",
+                            "Play Again?",
+                            JOptionPane.YES_NO_OPTION
+                    );
+
+                    if (response == JOptionPane.YES_OPTION) {
+                        this.dispose(); // Close the current window
+                        Client newClient = new Client(chatServer); // Create a fresh client
+                        newClient.setTitle("Client - New Game");
+                        newClient.setSize(800, 600);
+                        newClient.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                        newClient.setVisible(true);
+                        newClient.setResizable(false);
+                        newClient.setLocationRelativeTo(null);
+                        newClient.runClient(); // Reconnect to server
+                    } else {
+                        sendData(Commands.PLAYER_LEFT.toString());
+                        System.exit(0);
+                    }
                 }
+
+
+
+                if (message.startsWith("Your accusation was incorrect")) {
+                    JOptionPane.showMessageDialog(this, message, "❌ Incorrect Accusation", JOptionPane.WARNING_MESSAGE);
+                }
+
 
                 if (message.equals("YOUR_TURN")) {
                     // Enable your move, suggest, and accuse buttons

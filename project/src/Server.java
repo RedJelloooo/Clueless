@@ -257,9 +257,11 @@ public class Server extends JFrame {
                                     output.writeObject("MOVED " + moved + " to (" + newRow + "," + newCol + ")");
                                     if (moved) {
                                         broadcastPlayerPositions();
+                                        nextTurn();
                                     }
-                                    currentTurnIndex = (currentTurnIndex + 1) % players.size();
-                                    notifyCurrentTurnPlayer();
+//                                    currentTurnIndex = (currentTurnIndex + 1) % players.size();
+//                                    notifyCurrentTurnPlayer();
+
 
 
 
@@ -380,9 +382,9 @@ public class Server extends JFrame {
                                     System.out.println("Suggestion could not be disproved.");
                                 }
                                 broadcastPlayerPositions(); // To reflect suspect movement to all players
-                                currentTurnIndex = (currentTurnIndex + 1) % players.size();
-                                notifyCurrentTurnPlayer();
-
+//                                currentTurnIndex = (currentTurnIndex + 1) % players.size();
+//                                notifyCurrentTurnPlayer();
+                                nextTurn();
 
                             } catch (Exception ex) {
                                 ex.printStackTrace();
@@ -478,9 +480,11 @@ public class Server extends JFrame {
                                 // Optional: disable further actions from this player
 
                                 broadcastPlayerPositions(); // Optional: useful to reflect position if needed
+                                checkForVictory();
                                 //TODO (but only if the game isn't over — if you add game-over logic later.)
-                                currentTurnIndex = (currentTurnIndex + 1) % players.size();
-                                notifyCurrentTurnPlayer();
+//                                currentTurnIndex = (currentTurnIndex + 1) % players.size();
+//                                notifyCurrentTurnPlayer();
+                                nextTurn();
                                 //TODO (but only if the game isn't over — if you add game-over logic later.)
 
                             }
@@ -664,6 +668,54 @@ public class Server extends JFrame {
             e.printStackTrace();
         }
     }
+    private void nextTurn() {
+        //It keeps incrementing currentTurnIndex until it finds a player who is NOT eliminated.
+        //It stops if it loops all the way around (to avoid infinite loops if everyone is eliminated).
+        if (players.isEmpty()) return;
+
+        int startingIndex = currentTurnIndex;
+        do {
+            currentTurnIndex = (currentTurnIndex + 1) % players.size();
+        } while (players.get(currentTurnIndex).eliminated && currentTurnIndex != startingIndex);
+
+        notifyCurrentTurnPlayer();
+    }
+
+    private void checkForVictory() {
+        //Counts how many players are still active (not eliminated).
+        //
+        //If there's only one player left, they win automatically.
+        //
+        //It sends a "You WON!" message to the winner.
+        //
+        //It broadcasts to all players announcing who won.
+        if (players.isEmpty()) return;
+
+        List<Player> activePlayers = new ArrayList<>();
+        for (Player p : players) {
+            if (!p.eliminated) {
+                activePlayers.add(p);
+            }
+        }
+
+        if (activePlayers.size() == 1) {
+            Player winner = activePlayers.get(0);
+            try {
+                winner.output.writeObject("You WON! Everyone else has been eliminated.");
+                winner.output.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            broadcast(winner.characterName + " has WON the game because all other players were eliminated!");
+            System.out.println(winner.characterName + " has WON by default!");
+
+            // Optional: Stop the server/game here if you want
+            // System.exit(0);
+        }
+    }
+
+
 
 
 
