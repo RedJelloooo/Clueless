@@ -735,7 +735,16 @@ public class Client extends JFrame {
                     makeSuggestionButton.setEnabled(true);
                     makeAccusationButton.setEnabled(true);
                     secretPassageButton.setEnabled(true);
+
+                    JOptionPane.showMessageDialog(this,
+                            "It's your turn!💃🕺",
+                            "Your Turn",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    //Beep Sound
+                    Toolkit.getDefaultToolkit().beep();
                 }
+
 
                 if (message.equals("PROMPT_SUGGESTION")) {
                     SwingUtilities.invokeLater(() -> {
