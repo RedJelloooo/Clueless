@@ -886,8 +886,7 @@ public class Client extends JFrame {
         add(menu);
         add(display);
         add(makeSuggestionButton);
-        add(myCardsButton);
-        add(detectiveNotePad);
+
 
 
 
@@ -895,6 +894,10 @@ public class Client extends JFrame {
             add(scrollPane); // must be last to control visibility correctly
         }
 
+        add(myCardsButton);
+        add(detectiveNotePad);
+        setComponentZOrder(myCardsButton, 0);
+        setComponentZOrder(detectiveNotePad, 0);
     }
 
     /**
