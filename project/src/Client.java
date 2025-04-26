@@ -885,9 +885,10 @@ public class Client extends JFrame {
         add(gameBackgroundLabel);
         add(myCardsButton);
         add(detectiveNotePad);
+        add(makeSuggestionButton);
         add(menu);
         add(display);
-        add(makeSuggestionButton);
+
 
 
 
