@@ -326,7 +326,6 @@ public class Client extends JFrame {
            boardPanel.setVisible(true); //
         });
 
-
         makeSuggestionButton.addActionListener(e -> {
             String[] suspects = {
                     "MissScarlet", "ColonelMustard", "MrsWhite",
@@ -339,19 +338,60 @@ public class Client extends JFrame {
 
             JComboBox<String> suspectDropdown = new JComboBox<>(suspects);
             JComboBox<String> weaponDropdown = new JComboBox<>(weapons);
-            JPanel panel = new JPanel(new GridLayout(2, 2));
+            JButton notesButton = new JButton("Detective Notepad");
+
+            // Action for the Detective Notes button
+            notesButton.addActionListener(event -> detectiveNotePad.doClick());
+
+            JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5)); // 3 rows, 2 columns, nice spacing
             panel.add(new JLabel("Suspect:"));
             panel.add(suspectDropdown);
             panel.add(new JLabel("Weapon:"));
             panel.add(weaponDropdown);
+            panel.add(new JLabel("")); // Empty cell for alignment
+            panel.add(notesButton);
 
-            int result = JOptionPane.showConfirmDialog(this, panel, "Make a Suggestion", JOptionPane.OK_CANCEL_OPTION);
+            int result = JOptionPane.showConfirmDialog(
+                    this,
+                    panel,
+                    "Make a Suggestion",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
             if (result == JOptionPane.OK_OPTION) {
                 String suspect = (String) suspectDropdown.getSelectedItem();
                 String weapon = (String) weaponDropdown.getSelectedItem();
                 sendData("SUGGEST " + suspect + " " + weapon);
             }
         });
+
+
+//        makeSuggestionButton.addActionListener(e -> {
+//            String[] suspects = {
+//                    "MissScarlet", "ColonelMustard", "MrsWhite",
+//                    "MrGreen", "MrsPeacock", "ProfessorPlum"
+//            };
+//
+//            String[] weapons = {
+//                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
+//            };
+//
+//            JComboBox<String> suspectDropdown = new JComboBox<>(suspects);
+//            JComboBox<String> weaponDropdown = new JComboBox<>(weapons);
+//            JPanel panel = new JPanel(new GridLayout(2, 2));
+//            panel.add(new JLabel("Suspect:"));
+//            panel.add(suspectDropdown);
+//            panel.add(new JLabel("Weapon:"));
+//            panel.add(weaponDropdown);
+//
+//            int result = JOptionPane.showConfirmDialog(this, panel, "Make a Suggestion", JOptionPane.OK_CANCEL_OPTION);
+//            if (result == JOptionPane.OK_OPTION) {
+//                String suspect = (String) suspectDropdown.getSelectedItem();
+//                String weapon = (String) weaponDropdown.getSelectedItem();
+//                sendData("SUGGEST " + suspect + " " + weapon);
+//            }
+//        });
 
         makeAccusationButton.addActionListener(e -> {
             String[] suspects = {
