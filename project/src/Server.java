@@ -482,19 +482,39 @@ public class Server extends JFrame {
 //                            currentTurnIndex = (currentTurnIndex + 1) % players.size();
 //                            notifyCurrentTurnPlayer();
 //                        }
+//                        if (clientCommand.startsWith("DISPROVE_SELECTED")) {
+//                            String cardShown = clientCommand.split(" ", 2)[1];
+//
+//                            broadcast(characterName + " disproved the suggestion by showing a card."); //TODO maybe change by showing a card.
+//
+//                            Player suggester = findPlayerByName(lastSuggester);  // Corrected
+//                            if (suggester != null) {
+//                                suggester.output.writeObject(characterName + " showed you: " + cardShown);
+//                                suggester.output.flush();
+//                            }
+//
+//                            nextTurn(); // Properly move to next player
+//                        }
                         if (clientCommand.startsWith("DISPROVE_SELECTED")) {
                             String cardShown = clientCommand.split(" ", 2)[1];
 
-                            broadcast(characterName + " disproved the suggestion by showing a card."); //TODO maybe change by showing a card.
+                            broadcast(characterName + " disproved the suggestion by showing a card.");
 
-                            Player suggester = findPlayerByName(lastSuggester);  // Corrected
+                            Player suggester = findPlayerByName(lastSuggester);
                             if (suggester != null) {
                                 suggester.output.writeObject(characterName + " showed you: " + cardShown);
                                 suggester.output.flush();
+
+                                // NEW: Add the shown card to suggester's detective notepad (i.e., their cards list or memory)
+                                PlayerState suggesterState = gameBoard.getPlayerState(suggester.characterName);
+                                if (suggesterState != null && !suggesterState.getCards().contains(cardShown)) {
+                                    suggesterState.addCard(cardShown);
+                                }
                             }
 
-                            nextTurn(); // ✅ Properly move to next player
+                            nextTurn(); // Move to next player
                         }
+
 
 
 
