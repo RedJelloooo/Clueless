@@ -740,6 +740,24 @@ public class Client extends JFrame {
                             "Your Cards", JOptionPane.INFORMATION_MESSAGE);
                 }
 
+
+                if (message.contains("showed you:")) {
+                    String shownCard = message.substring(message.indexOf("showed you:") + "showed you:".length()).trim();
+
+                    // Add the shown card to the detective notepad (myCards)
+                    if (!myCards.contains(shownCard)) {
+                        myCards += "\n" + shownCard;
+                    }
+
+                    // Show popup confirming the new note
+                    JOptionPane.showMessageDialog(this,
+                            "New note added to your detective notepad:\n" + shownCard,
+                            "Detective Note Updated",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+
+
+
                 if (message.startsWith("DISPROVE_OPTIONS")) {
                     String[] options = message.substring("DISPROVE_OPTIONS".length()).trim().split(",");
                     String selectedCard = (String) JOptionPane.showInputDialog(
