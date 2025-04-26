@@ -737,6 +737,13 @@ public class Client extends JFrame {
                     secretPassageButton.setEnabled(true);
                 }
 
+                if (message.equals("PROMPT_SUGGESTION")) {
+                    SwingUtilities.invokeLater(() -> {
+                        makeSuggestionButton.doClick();
+                    });
+                }
+
+
                 if (message.equals("SUGGESTION_NOT_DISPROVED_BY_PREVIOUS")) {
                     JOptionPane.showMessageDialog(this,
                             "The player before you could not disprove your suggestion.",

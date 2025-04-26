@@ -258,8 +258,21 @@ public class Server extends JFrame {
                                     output.writeObject("MOVED " + moved + " to (" + newRow + "," + newCol + ")");
                                     if (moved) {
                                         broadcastPlayerPositions();
+
+                                        // NEW: Check if the player moved into a room
+                                        Room newRoom = gameBoard.getRoom(newRow, newCol);
+                                        if (newRoom != null && !newRoom.getName().equals("Hallway")) {
+                                            output.writeObject("PROMPT_SUGGESTION");
+                                            output.flush();
+                                        }
+
                                         nextTurn();
                                     }
+
+//                                    if (moved) {
+//                                        broadcastPlayerPositions();
+//                                        nextTurn();
+//                                    }
 //                                    currentTurnIndex = (currentTurnIndex + 1) % players.size();
 //                                    notifyCurrentTurnPlayer();
 
