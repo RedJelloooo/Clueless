@@ -345,11 +345,14 @@ public class Server extends JFrame {
                                     int oldRow = suspectPlayer.getRow();
                                     int oldCol = suspectPlayer.getCol();
 
-                                    Room oldRoom = gameBoard.getRoom(suspect);
+//                                    Room oldRoom = gameBoard.getRoom(suspect); // TODO delete after verifying
+                                    Room oldRoom = gameBoard.getRoom(oldRow, oldCol);
                                     if (oldRoom != null) oldRoom.removeOccupant(suspect);
 
                                     suspectPlayer.setPosition(currentRoom.getRow(), currentRoom.getCol());
                                     currentRoom.addOccupant(suspect);
+
+                                    broadcastPlayerPositions();
 
                                 }
 
