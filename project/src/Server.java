@@ -380,62 +380,20 @@ public class Server extends JFrame {
                                     } else {
                                         broadcast("SUGGESTION_NOT_DISPROVED_BY_PREVIOUS"); // NEW LINE
                                         broadcast(leftPlayer.characterName + " cannot disprove the suggestion.");
-                                        nextTurn(); // Move to next player's turn
+                                        output.writeObject("PROMPT_ACCUSATION_OR_END");
+                                        output.flush();
+
                                     }
-//
-//                                    else {
-//
-//                                        // Broadcast to everyone that left player cannot disprove
-//                                        broadcast(leftPlayer.characterName + " cannot disprove the suggestion.");
-//                                        nextTurn(); // Move to next player's turn
-//                                    }
+
 
                                 }
+//                                else {
+//                                    output.writeObject("PROMPT_ACCUSATION_OR_END");
+//                                    output.flush();
+//                                } // TODO this might be wrong fix in the FUTURE
 
 //                                // TODO: In future - notify other players to disprove
-//                                // Step 4: Check if other players can disprove the suggestion
-//                                List<String> suggestionCards = List.of(suspect, weapon, roomName);
-//
-//                                boolean disproved = false;
-//                                for (Player p : players) {
-//                                    // skip the suggester
-//                                    if (p.characterName.equals(characterName)) continue;
-//
-//                                    PlayerState otherState = gameBoard.getPlayerState(p.characterName);
-//                                    if (otherState == null) continue;
-//
-//                                    for (String card : otherState.getCards()) {
-//                                        if (suggestionCards.contains(card)) {
-//                                            // Found someone who can disprove — send only to that player
-//                                            try {
-//                                                p.output.writeObject("You can disprove " + characterName + "'s suggestion. Reveal: " + card);
-//                                                p.output.flush();
-//
-//                                                // Notify suggester
-//                                                output.writeObject("Your suggestion was disproved by " + p.characterName + " showing: " + card);
-//                                                output.flush();
-//
-//                                                System.out.println(p.characterName + " disproved the suggestion with: " + card);
-//                                                disproved = true;
-//                                            } catch (IOException e) {
-//                                                e.printStackTrace();
-//                                            }
-//                                            break;
-//                                        }
-//                                    }
-//
-//                                    if (disproved) break; // Stop once someone disproves
-//                                }
-//
-//                                if (!disproved) {
-//                                    output.writeObject("No one could disprove your suggestion.");
-//                                    output.flush();
-//                                    System.out.println("Suggestion could not be disproved.");
-//                                }
-                                broadcastPlayerPositions(); // To reflect suspect movement to all players
-//                                currentTurnIndex = (currentTurnIndex + 1) % players.size();
-//                                notifyCurrentTurnPlayer();
-                                nextTurn();
+
 
                             } catch (Exception ex) {
                                 ex.printStackTrace();
@@ -487,55 +445,10 @@ public class Server extends JFrame {
                             broadcastPlayerPositions();
                         }
 
-//                        if (clientCommand.startsWith("DISPROVE_SELECTED")) {
-//                            String cardShown = clientCommand.split(" ", 2)[1];
-//
-//                            // Tell everyone what happened
-//                            broadcast(characterName + " disproved the suggestion by showing a card.");
-//
-//                            // Optional: send private message to suggester showing which card
-////                            Player suggester = players.get((currentTurnIndex) % players.size());
-//                            Player suggester = findPlayerByName(lastSuggester);
-//
-//                            suggester.output.writeObject(characterName + " showed you: " + cardShown);
-//                            suggester.output.flush();
-//
-//                            currentTurnIndex = (currentTurnIndex + 1) % players.size();
-//                            notifyCurrentTurnPlayer();
-//                        }
-//                        if (clientCommand.startsWith("DISPROVE_SELECTED")) {
-//                            String cardShown = clientCommand.split(" ", 2)[1];
-//
-//                            broadcast(characterName + " disproved the suggestion by showing a card."); //TODO maybe change by showing a card.
-//
-//                            Player suggester = findPlayerByName(lastSuggester);  // Corrected
-//                            if (suggester != null) {
-//                                suggester.output.writeObject(characterName + " showed you: " + cardShown);
-//                                suggester.output.flush();
-//                            }
-//
-//                            nextTurn(); // Properly move to next player
-//                        }
-//                        if (clientCommand.startsWith("DISPROVE_SELECTED")) {
-//                            String cardShown = clientCommand.split(" ", 2)[1];
-//
-//                            broadcast(characterName + " disproved the suggestion by showing a card.");
-//
-//                            Player suggester = findPlayerByName(lastSuggester);
-//                            if (suggester != null) {
-//                                suggester.output.writeObject(characterName + " showed you: " + cardShown);
-//                                suggester.output.flush();
-//
-//                                // NEW: Add the shown card to suggester's detective notepad (i.e., their cards list or memory)
-//                                PlayerState suggesterState = gameBoard.getPlayerState(suggester.characterName);
-//                                if (suggesterState != null && !suggesterState.getCards().contains(cardShown)) {
-//                                    suggesterState.addCard(cardShown); // TODO This is wrong. When someone shows you a-
-//                                    //TODO -card to disprove, you should NOT add it to your owned cards list — it should only go to your detective notepad.
-//                                }
-//                            }
-//
-//                            nextTurn(); // Move to next player
-//                        }
+                        if (clientCommand.equals("END_TURN")) {
+                            nextTurn();
+                        }
+
 
                         if (clientCommand.startsWith("DISPROVE_SELECTED")) {
                             String cardShown = clientCommand.split(" ", 2)[1];

@@ -751,6 +751,28 @@ public class Client extends JFrame {
                             JOptionPane.INFORMATION_MESSAGE);
                 }
 
+                if (message.equals("PROMPT_ACCUSATION_OR_END")) {
+                    SwingUtilities.invokeLater(() -> {
+                        int response = JOptionPane.showOptionDialog(
+                                this,
+                                "Would you like to make an accusation or end your turn?",
+                                "Choose an Action",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.QUESTION_MESSAGE,
+                                null,
+                                new String[]{"Make Accusation", "End Turn"},
+                                "End Turn"
+                        );
+
+                        if (response == JOptionPane.YES_OPTION) {
+                            makeAccusationButton.doClick(); // auto-clicks the Accusation button
+                        } else {
+                            sendData("END_TURN"); // Send new command to the server
+                        }
+                    });
+                }
+
+
 
                 //  NEW: Handle custom game messages from Clue-Less server
                 if (message.startsWith("LOCATION")) {
