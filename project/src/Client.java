@@ -676,6 +676,8 @@ public class Client extends JFrame {
 
 
 
+
+
                 //  NEW: Handle custom game messages from Clue-Less server
                 if (message.startsWith("LOCATION")) {
                     // Format: "LOCATION Ballroom [2,2]"
@@ -737,6 +739,23 @@ public class Client extends JFrame {
                     JOptionPane.showMessageDialog(this, "Your cards are:\n" + cardsList,
                             "Your Cards", JOptionPane.INFORMATION_MESSAGE);
                 }
+
+                if (message.startsWith("DISPROVE_OPTIONS")) {
+                    String[] options = message.substring("DISPROVE_OPTIONS".length()).trim().split(",");
+                    String selectedCard = (String) JOptionPane.showInputDialog(
+                            this,
+                            "Choose a card to disprove the suggestion:",
+                            "Disprove Suggestion",
+                            JOptionPane.PLAIN_MESSAGE,
+                            null,
+                            options,
+                            options[0]
+                    );
+                    if (selectedCard != null) {
+                        sendData("DISPROVE_SELECTED " + selectedCard);
+                    }
+                }
+
 
 
 

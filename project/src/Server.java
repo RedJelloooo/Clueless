@@ -37,6 +37,7 @@ public class Server extends JFrame {
     private String leaderboard = "";
     private int currentTurnIndex = 0; // index into players list
     private boolean gameStarted = false;
+    private String lastSuggester = null;
     private static final Map<String, int[]> startingPositions = Map.of(
             "MissScarlet", new int[]{4, 0},
             "ColonelMustard", new int[]{0, 2},
@@ -323,6 +324,8 @@ public class Server extends JFrame {
                                 System.out.println(characterName + " made a suggestion: " +
                                         suspect + " with the " + weapon + " in the " + currentRoom.getName());
 
+                                lastSuggester = characterName;
+
                                 // Move suspect (character) to current room
                                 PlayerState suspectPlayer = gameBoard.getPlayerState(suspect);
                                 if (suspectPlayer != null) {
@@ -341,46 +344,73 @@ public class Server extends JFrame {
                                 output.writeObject(msg); // Send confirmation to suggester
                                 output.flush();
 
-                                // TODO: In future - notify other players to disprove
-                                // Step 4: Check if other players can disprove the suggestion
+                                broadcast(characterName + " suggests: " + suspect + " with the " + weapon + " in the " + roomName);
+
                                 List<String> suggestionCards = List.of(suspect, weapon, roomName);
 
-                                boolean disproved = false;
-                                for (Player p : players) {
-                                    // skip the suggester
-                                    if (p.characterName.equals(characterName)) continue;
+                                // Get the left player (the player before the suggester)
+                                Player leftPlayer = players.get((currentTurnIndex - 1 + players.size()) % players.size());
+                                PlayerState leftState = gameBoard.getPlayerState(leftPlayer.characterName);
 
-                                    PlayerState otherState = gameBoard.getPlayerState(p.characterName);
-                                    if (otherState == null) continue;
-
-                                    for (String card : otherState.getCards()) {
+                                if (leftState != null) {
+                                    List<String> matches = new ArrayList<>();
+                                    for (String card : leftState.getCards()) {
                                         if (suggestionCards.contains(card)) {
-                                            // Found someone who can disprove — send only to that player
-                                            try {
-                                                p.output.writeObject("You can disprove " + characterName + "'s suggestion. Reveal: " + card);
-                                                p.output.flush();
-
-                                                // Notify suggester
-                                                output.writeObject("Your suggestion was disproved by " + p.characterName + " showing: " + card);
-                                                output.flush();
-
-                                                System.out.println(p.characterName + " disproved the suggestion with: " + card);
-                                                disproved = true;
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                            }
-                                            break;
+                                            matches.add(card);
                                         }
                                     }
 
-                                    if (disproved) break; // Stop once someone disproves
+                                    if (!matches.isEmpty()) {
+                                        // Send dropdown menu to the left player
+                                        leftPlayer.output.writeObject("DISPROVE_OPTIONS " + String.join(",", matches));
+                                        leftPlayer.output.flush();
+                                    } else {
+                                        // Broadcast to everyone that left player cannot disprove
+                                        broadcast(leftPlayer.characterName + " cannot disprove the suggestion.");
+                                        nextTurn(); // Move to next player's turn
+                                    }
                                 }
 
-                                if (!disproved) {
-                                    output.writeObject("No one could disprove your suggestion.");
-                                    output.flush();
-                                    System.out.println("Suggestion could not be disproved.");
-                                }
+//                                // TODO: In future - notify other players to disprove
+//                                // Step 4: Check if other players can disprove the suggestion
+//                                List<String> suggestionCards = List.of(suspect, weapon, roomName);
+//
+//                                boolean disproved = false;
+//                                for (Player p : players) {
+//                                    // skip the suggester
+//                                    if (p.characterName.equals(characterName)) continue;
+//
+//                                    PlayerState otherState = gameBoard.getPlayerState(p.characterName);
+//                                    if (otherState == null) continue;
+//
+//                                    for (String card : otherState.getCards()) {
+//                                        if (suggestionCards.contains(card)) {
+//                                            // Found someone who can disprove — send only to that player
+//                                            try {
+//                                                p.output.writeObject("You can disprove " + characterName + "'s suggestion. Reveal: " + card);
+//                                                p.output.flush();
+//
+//                                                // Notify suggester
+//                                                output.writeObject("Your suggestion was disproved by " + p.characterName + " showing: " + card);
+//                                                output.flush();
+//
+//                                                System.out.println(p.characterName + " disproved the suggestion with: " + card);
+//                                                disproved = true;
+//                                            } catch (IOException e) {
+//                                                e.printStackTrace();
+//                                            }
+//                                            break;
+//                                        }
+//                                    }
+//
+//                                    if (disproved) break; // Stop once someone disproves
+//                                }
+//
+//                                if (!disproved) {
+//                                    output.writeObject("No one could disprove your suggestion.");
+//                                    output.flush();
+//                                    System.out.println("Suggestion could not be disproved.");
+//                                }
                                 broadcastPlayerPositions(); // To reflect suspect movement to all players
 //                                currentTurnIndex = (currentTurnIndex + 1) % players.size();
 //                                notifyCurrentTurnPlayer();
@@ -392,6 +422,8 @@ public class Server extends JFrame {
                                 output.flush();
                             }
                         }
+
+
 
                         if (clientCommand.equals("SECRET_PASSAGE")) {
                             PlayerState player = gameBoard.getPlayerState(characterName);
@@ -432,6 +464,36 @@ public class Server extends JFrame {
                             output.writeObject("MOVED true to (" + destination.x + "," + destination.y + ") via secret passage");
                             output.flush();
                             broadcastPlayerPositions();
+                        }
+
+//                        if (clientCommand.startsWith("DISPROVE_SELECTED")) {
+//                            String cardShown = clientCommand.split(" ", 2)[1];
+//
+//                            // Tell everyone what happened
+//                            broadcast(characterName + " disproved the suggestion by showing a card.");
+//
+//                            // Optional: send private message to suggester showing which card
+////                            Player suggester = players.get((currentTurnIndex) % players.size());
+//                            Player suggester = findPlayerByName(lastSuggester);
+//
+//                            suggester.output.writeObject(characterName + " showed you: " + cardShown);
+//                            suggester.output.flush();
+//
+//                            currentTurnIndex = (currentTurnIndex + 1) % players.size();
+//                            notifyCurrentTurnPlayer();
+//                        }
+                        if (clientCommand.startsWith("DISPROVE_SELECTED")) {
+                            String cardShown = clientCommand.split(" ", 2)[1];
+
+                            broadcast(characterName + " disproved the suggestion by showing a card."); //TODO maybe change by showing a card.
+
+                            Player suggester = findPlayerByName(lastSuggester);  // Corrected
+                            if (suggester != null) {
+                                suggester.output.writeObject(characterName + " showed you: " + cardShown);
+                                suggester.output.flush();
+                            }
+
+                            nextTurn(); // ✅ Properly move to next player
                         }
 
 
@@ -714,6 +776,16 @@ public class Server extends JFrame {
             // System.exit(0);
         }
     }
+
+    private Player findPlayerByName(String name) {
+        for (Player p : players) {
+            if (p.characterName.equals(name)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
 
 
 
