@@ -11,12 +11,10 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.Point;
 
 
@@ -49,6 +47,7 @@ public class Client extends JFrame {
     private int currentPlayerRow = -1;
     private int currentPlayerCol = -1;
     private String myCards = "";
+    private final java.util.List<String> detectiveNotes = new ArrayList<>();
 
 
 
@@ -155,6 +154,7 @@ public class Client extends JFrame {
         skinsButton = new JButton();
         chooseName = new JButton();
         displayRules = new JButton();
+        detectiveNotePad = new JButton();
 
         timeRemainingLabel = new JLabel(seconds + " seconds remaining!");
         currentRoundLabel = new JLabel("Round " + clientRound);
@@ -396,6 +396,18 @@ public class Client extends JFrame {
             }
         });
 
+        detectiveNotePad.addActionListener(e -> {
+            if (detectiveNotes.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "You have no notes yet!", "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                StringBuilder notesBuilder = new StringBuilder();
+                for (String note : detectiveNotes) {
+                    notesBuilder.append(note).append("\n");
+                }
+                JOptionPane.showMessageDialog(this, "Detective Notes:\n" + notesBuilder.toString(),
+                        "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
 
 
 
@@ -741,20 +753,41 @@ public class Client extends JFrame {
                 }
 
 
+//                if (message.contains("showed you:")) {
+//                    String shownCard = message.substring(message.indexOf("showed you:") + "showed you:".length()).trim();
+//
+//                    // Add the shown card to the detective notepad (myCards)
+//                    if (!myCards.contains(shownCard)) {
+//                        myCards += "\n" + shownCard;
+//                    }
+//
+//                    // Show popup confirming the new note
+//                    JOptionPane.showMessageDialog(this,
+//                            "New note added to your detective notepad:\n" + shownCard,
+//                            "Detective Note Updated",
+//                            JOptionPane.INFORMATION_MESSAGE);
+//                }
                 if (message.contains("showed you:")) {
-                    String shownCard = message.substring(message.indexOf("showed you:") + "showed you:".length()).trim();
+                    // Example message: "MrsWhite showed you: Revolver"
+                    String[] parts = message.split("showed you:");
+                    String disapprovingPlayer = parts[0].trim(); // e.g., "MrsWhite"
+                    String shownCard = parts[1].trim();           // e.g., "Revolver"
 
-                    // Add the shown card to the detective notepad (myCards)
-                    if (!myCards.contains(shownCard)) {
-                        myCards += "\n" + shownCard;
+                    // Create a detective note entry like "MrsWhite: Revolver"
+                    String detectiveEntry = disapprovingPlayer + ": " + shownCard;
+
+                    // Only add it if it’s not already in the detective notes
+                    if (!detectiveNotes.contains(detectiveEntry)) {
+                        detectiveNotes.add(detectiveEntry);
                     }
 
-                    // Show popup confirming the new note
+                    // Show a popup notifying the player
                     JOptionPane.showMessageDialog(this,
-                            "New note added to your detective notepad:\n" + shownCard,
+                            disapprovingPlayer + " disproved your suggestion by showing you: " + shownCard,
                             "Detective Note Updated",
                             JOptionPane.INFORMATION_MESSAGE);
                 }
+
 
 
 
