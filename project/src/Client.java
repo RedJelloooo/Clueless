@@ -628,6 +628,14 @@ public class Client extends JFrame {
                     JOptionPane.showMessageDialog(this, message, "Accusation Result", JOptionPane.INFORMATION_MESSAGE);
                 }
 
+                if (message.equals("YOUR_TURN")) {
+                    // Enable your move, suggest, and accuse buttons
+                    makeSuggestionButton.setEnabled(true);
+                    makeAccusationButton.setEnabled(true);
+                    secretPassageButton.setEnabled(true);
+                }
+
+
 
                 //  NEW: Handle custom game messages from Clue-Less server
                 if (message.startsWith("LOCATION")) {
@@ -679,16 +687,11 @@ public class Client extends JFrame {
                         String playerName = tokens[0];
                         int row = Integer.parseInt(tokens[1]);
                         int col = Integer.parseInt(tokens[2]);
-                        updateBoard(playerName, row, col);  // ✅ use the correct playerName
+                        updateBoard(playerName, row, col);  // use the correct playerName
                     }
                 }
 
-//                if (message.startsWith("YOUR_CARDS")) {
-//                    // Example message: "YOUR_CARDS [MissScarlet, Rope, Lounge]"
-//                    String cardsList = message.substring("YOUR_CARDS".length()).trim();
-//                    JOptionPane.showMessageDialog(this, "Your cards are:\n" + cardsList,
-//                            "Your Cards", JOptionPane.INFORMATION_MESSAGE);
-//                }
+
                 if (message.startsWith("YOUR_CARDS")) {
                     String cardsList = message.substring("YOUR_CARDS".length()).trim();
                     myCards = cardsList; // Save the cards for later
@@ -889,9 +892,11 @@ public class Client extends JFrame {
         add(menu);
         add(display);
 
+        makeSuggestionButton.setEnabled(false);
+        makeAccusationButton.setEnabled(false);
+        secretPassageButton.setEnabled(false);
 
-
-
+        mainMenuInitialize();
 
         if (scrollPane != null) {
             add(scrollPane); // must be last to control visibility correctly
@@ -1057,6 +1062,8 @@ public class Client extends JFrame {
     }
 
 
-
+//TODO Make sure disconnects or eliminations (like bad accusations) correctly skip turns later — we'll handle that after basic turns are working.
+//
+//TODO For now, assume all players are active.
 
 }

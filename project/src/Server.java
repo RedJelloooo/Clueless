@@ -258,6 +258,9 @@ public class Server extends JFrame {
                                     if (moved) {
                                         broadcastPlayerPositions();
                                     }
+                                    currentTurnIndex = (currentTurnIndex + 1) % players.size();
+                                    notifyCurrentTurnPlayer();
+
 
 
                                 } else {
@@ -376,7 +379,11 @@ public class Server extends JFrame {
                                     output.flush();
                                     System.out.println("Suggestion could not be disproved.");
                                 }
-                                broadcastPlayerPositions(); // ✅ To reflect suspect movement to all players
+                                broadcastPlayerPositions(); // To reflect suspect movement to all players
+                                currentTurnIndex = (currentTurnIndex + 1) % players.size();
+                                notifyCurrentTurnPlayer();
+
+
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                                 output.writeObject("ERROR Could not process suggestion.");
@@ -470,7 +477,12 @@ public class Server extends JFrame {
                                 System.out.println(characterName + " has been eliminated.");
                                 // Optional: disable further actions from this player
 
-                                broadcastPlayerPositions(); // ✅ Optional: useful to reflect position if needed
+                                broadcastPlayerPositions(); // Optional: useful to reflect position if needed
+                                //TODO (but only if the game isn't over — if you add game-over logic later.)
+                                currentTurnIndex = (currentTurnIndex + 1) % players.size();
+                                notifyCurrentTurnPlayer();
+                                //TODO (but only if the game isn't over — if you add game-over logic later.)
+
                             }
 
                             continue; // skip to next command
