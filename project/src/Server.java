@@ -503,6 +503,27 @@ public class Server extends JFrame {
 //
 //                            nextTurn(); // Properly move to next player
 //                        }
+//                        if (clientCommand.startsWith("DISPROVE_SELECTED")) {
+//                            String cardShown = clientCommand.split(" ", 2)[1];
+//
+//                            broadcast(characterName + " disproved the suggestion by showing a card.");
+//
+//                            Player suggester = findPlayerByName(lastSuggester);
+//                            if (suggester != null) {
+//                                suggester.output.writeObject(characterName + " showed you: " + cardShown);
+//                                suggester.output.flush();
+//
+//                                // NEW: Add the shown card to suggester's detective notepad (i.e., their cards list or memory)
+//                                PlayerState suggesterState = gameBoard.getPlayerState(suggester.characterName);
+//                                if (suggesterState != null && !suggesterState.getCards().contains(cardShown)) {
+//                                    suggesterState.addCard(cardShown); // TODO This is wrong. When someone shows you a-
+//                                    //TODO -card to disprove, you should NOT add it to your owned cards list — it should only go to your detective notepad.
+//                                }
+//                            }
+//
+//                            nextTurn(); // Move to next player
+//                        }
+
                         if (clientCommand.startsWith("DISPROVE_SELECTED")) {
                             String cardShown = clientCommand.split(" ", 2)[1];
 
@@ -512,16 +533,11 @@ public class Server extends JFrame {
                             if (suggester != null) {
                                 suggester.output.writeObject(characterName + " showed you: " + cardShown);
                                 suggester.output.flush();
-
-                                // NEW: Add the shown card to suggester's detective notepad (i.e., their cards list or memory)
-                                PlayerState suggesterState = gameBoard.getPlayerState(suggester.characterName);
-                                if (suggesterState != null && !suggesterState.getCards().contains(cardShown)) {
-                                    suggesterState.addCard(cardShown);
-                                }
                             }
 
                             nextTurn(); // Move to next player
                         }
+
 
 
 
