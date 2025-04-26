@@ -35,6 +35,8 @@ public class Server extends JFrame {
     private final String[] scrambles;
     private final TournamentScoreboard tournamentScoreboard;
     private String leaderboard = "";
+    private int currentTurnIndex = 0; // index into players list
+    private boolean gameStarted = false;
     private static final Map<String, int[]> startingPositions = Map.of(
             "MissScarlet", new int[]{4, 0},
             "ColonelMustard", new int[]{0, 2},
@@ -202,9 +204,6 @@ public class Server extends JFrame {
                         }
 
 
-
-
-
                         // MOVE_DIRECTION command (up, down, left, right)
                         if (clientCommand.startsWith("MOVE_DIRECTION")) {
                             if (eliminated) {
@@ -212,6 +211,13 @@ public class Server extends JFrame {
                                 output.flush();
                                 continue;
                             }
+
+                            if (!characterName.equals(players.get(currentTurnIndex).characterName)) {
+                                output.writeObject("ERROR Not your turn.");
+                                output.flush();
+                                continue;
+                            }
+
 
                             try {
                                 String direction = clientCommand.split(" ")[1];
@@ -272,6 +278,13 @@ public class Server extends JFrame {
                                 output.flush();
                                 continue;
                             }
+
+                            if (!characterName.equals(players.get(currentTurnIndex).characterName)) {
+                                output.writeObject("ERROR Not your turn.");
+                                output.flush();
+                                continue;
+                            }
+
 
                             try {
                                 String[] parts = clientCommand.split(" ");
@@ -420,6 +433,13 @@ public class Server extends JFrame {
                                 output.flush();
                                 continue;
                             }
+
+                            if (!characterName.equals(players.get(currentTurnIndex).characterName)) {
+                                output.writeObject("ERROR Not your turn.");
+                                output.flush();
+                                continue;
+                            }
+
 
                             String[] parts = clientCommand.split(" ");
                             if (parts.length < 4) {
@@ -616,6 +636,20 @@ public class Server extends JFrame {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        gameStarted = true;
+        notifyCurrentTurnPlayer();
+
+    }
+
+    private void notifyCurrentTurnPlayer() {
+        if (players.isEmpty()) return;
+        Player currentPlayer = players.get(currentTurnIndex);
+        try {
+            currentPlayer.output.writeObject("YOUR_TURN");
+            currentPlayer.output.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
