@@ -69,12 +69,11 @@ public class Client extends JFrame {
     private final JButton chooseName;
     private final JButton displayRules;
     private JScrollPane scrollPane;
-    //TODO delete after testing
-//    private JButton whereAmIButton;
-    //TODO delete after testing
     private JButton secretPassageButton;
     private final JButton makeSuggestionButton = new JButton("Make Suggestion");
     private final JButton makeAccusationButton = new JButton("Make Accusation");
+    private JButton myCardsButton;
+    private JButton detectiveNotePad;
 
 
     private final JLabel scrambleForCurrentRoundLabel;
@@ -88,6 +87,7 @@ public class Client extends JFrame {
     private JLabel gameLogo;
     private JLabel menu;
     private JLabel rules;
+
 
 
     private final JTextField enterName;
@@ -149,6 +149,8 @@ public class Client extends JFrame {
         exitTheApplicationButton = new JButton();
         joinTheTournamentButton = new JButton();
         displayLeaderboard = new JButton();
+        myCardsButton = new JButton();
+        detectiveNotePad = new JButton();
         skinsButton = new JButton();
         chooseName = new JButton();
         displayRules = new JButton();
@@ -165,13 +167,6 @@ public class Client extends JFrame {
         textField = new JTextField();
 
         textField.setEditable(true);
-
-        //TODO delete after testing
-//        whereAmIButton = new JButton("Where Am I?");
-//        whereAmIButton.setBounds(600, 340, 150, 25);
-//        whereAmIButton.setVisible(true);
-//        add(whereAmIButton);
-        //TODO delete after testing
 
         JButton upButton = new JButton("Up");
         upButton.setBounds(25, 400, 100, 25);
@@ -222,14 +217,6 @@ public class Client extends JFrame {
             sendData("MOVE_DIRECTION RIGHT");
         });
 
-        //TODO delete after testing
-//        whereAmIButton.addActionListener(e -> {
-//            System.out.println("Sending command: WHERE");
-//            sendData("WHERE");
-//        });
-        //TODO delete after testing
-
-
 
         boardLabels = new JLabel[BOARD_SIZE][BOARD_SIZE];
         JPanel boardPanel = new JPanel(new GridLayout(BOARD_SIZE, BOARD_SIZE));
@@ -274,7 +261,7 @@ public class Client extends JFrame {
             }
         }
 
-        add(boardPanel);
+//        add(boardPanel);
 
 
         URL rulesURL = getClass().getResource("rules.png");
@@ -286,8 +273,6 @@ public class Client extends JFrame {
             scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setVisible(false); // hide it by default
-
-
 
         }
 
@@ -324,7 +309,7 @@ public class Client extends JFrame {
         add(characterDropdown);
 
         JButton joinGameButton = new JButton("Join Game");
-        joinGameButton.setBounds(600, 240 + 35, 150, 25);
+        joinGameButton.setBounds(600, 275, 150, 25);
         add(joinGameButton);
 
 
@@ -332,6 +317,7 @@ public class Client extends JFrame {
             String selected = (String) characterDropdown.getSelectedItem();
             name = selected;
             sendData("JOIN " + selected);
+            add(boardPanel);
         });
 
 
@@ -467,8 +453,10 @@ public class Client extends JFrame {
             backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
             backToMainMenuFromSkinsButton.setVisible(false);
             exitTheApplicationButton.setVisible(true);
-            joinTheTournamentButton.setVisible(true);
+            joinTheTournamentButton.setVisible(false);//TODO set false cant delete will break the game
             displayLeaderboard.setVisible(true);
+            myCardsButton.setVisible(true);
+            detectiveNotePad.setVisible(true);
             imagesJComboBox.setVisible(false);
             skinsButton.setVisible(true);
             enterName.setVisible(false);
@@ -507,8 +495,6 @@ public class Client extends JFrame {
             backToMainMenuFromSkinsButton.setBounds(600, 450, 150, 50);
 
         });
-
-
 
         joinTheTournamentButton.addActionListener(e -> {
             if (clientRound >= 5) {
@@ -639,15 +625,9 @@ public class Client extends JFrame {
                     JOptionPane.showMessageDialog(this, message, "Location", JOptionPane.INFORMATION_MESSAGE);
                 }
 
-                //TODO delete after testing
-//                if (message.startsWith("MOVED")) {
-//                    JOptionPane.showMessageDialog(this, message, "Move Result", JOptionPane.INFORMATION_MESSAGE);
-//                }
-                //TODO delete after testing
                 if (message.startsWith("MOVED false")) {
                     JOptionPane.showMessageDialog(this, message, "Move Result", JOptionPane.INFORMATION_MESSAGE);
                 }
-
 
                 if (message.startsWith("JOINED") || message.startsWith("FAILED")) {
                     JOptionPane.showMessageDialog(this, message, "Join Result", JOptionPane.INFORMATION_MESSAGE);
@@ -656,18 +636,6 @@ public class Client extends JFrame {
                 if (message.startsWith("ERROR")) {
                     JOptionPane.showMessageDialog(this, message, "Game Error", JOptionPane.ERROR_MESSAGE);
                 }
-//                 TODO delete this added new code below so all players can be added to the board Delete this after texting
-//                if (message.startsWith("ALL_POSITIONS")) {
-//                    String[] parts = message.split(" ");
-//                    for (int i = 1; i < parts.length; i++) {
-//                        String[] tokens = parts[i].split(",");
-//                        String name = tokens[0];
-//                        int row = Integer.parseInt(tokens[1]);
-//                        int col = Integer.parseInt(tokens[2]);
-//                        updateBoard(name, row, col);  // This already handles initials + display logic
-//                    }
-//                }
-//                 TODO delete this added new code below so all players can be added to the board Delete this after texting
 
                 if (message.startsWith("ALL_POSITIONS")) {
                     // First, clear all initials from the board
@@ -836,7 +804,7 @@ public class Client extends JFrame {
         scrambleForCurrentRoundLabel.setVisible(false);
         continueToNextRoundButton.setVisible(false);
         exitTheApplicationButton.setVisible(true);
-        joinTheTournamentButton.setVisible(true);
+        joinTheTournamentButton.setVisible(false); //TODO set to false cant delete will break the game
         gameBackgroundLabel.setVisible(false);
         timeRemainingLabel.setVisible(false);
         displayLeaderboard.setVisible(true);
@@ -852,6 +820,8 @@ public class Client extends JFrame {
         gameLogo.setVisible(false);
         gameLogo.setVisible(false);
         display.setVisible(true);
+        myCardsButton.setVisible(true);
+        detectiveNotePad.setVisible(true);
         if (scrollPane != null) scrollPane.setVisible(false);
     }
 
@@ -885,6 +855,10 @@ public class Client extends JFrame {
         add(menu);
         add(display);
         add(makeSuggestionButton);
+        add(myCardsButton);
+        add(detectiveNotePad);
+
+
 
         if (scrollPane != null) {
             add(scrollPane); // must be last to control visibility correctly
@@ -901,26 +875,27 @@ public class Client extends JFrame {
 
         menu.setBounds(-10, -50, 800, 600); //-10, -50, 800, 600
         makeSuggestionButton.setBounds(150, 20, 150, 25); //New Suggestion button
-        makeAccusationButton.setBounds(400, 20, 150, 25);
+        makeAccusationButton.setBounds(600, 404, 150, 25);//600, 372, 150, 25
         backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
         scrambleForCurrentRoundLabel.setBounds(50, 225, 750, 60);
-        displayRules.setBounds(600,404,150,25); //600,275,150,25
+        displayRules.setBounds(600, 307, 150, 25); //600,275,150,25
         exitFromGameToMainMenuButton.setBounds(600, 435, 150, 25);
         exitTheApplicationButton.setBounds(600, 436, 150, 25); // 600, 435, 150, 25
-        joinTheTournamentButton.setBounds(600, 372, 150, 25);
+//        joinTheTournamentButton.setBounds(600, 372, 150, 25);
         timeRemainingLabel.setBounds(50, 225, 700, 100);
         continueToNextRoundButton.setBounds(600,403,150,25);
         currentRoundLabel.setBounds(70, 310, 150, 50);
         gameBackgroundLabel.setBounds(0, 0, 800, 600);
         gameTimerLabel.setBounds(565, -10, 225, 150);
         imagesJComboBox.setBounds(600, 275, 150, 50);
-        displayLeaderboard.setBounds(600, 404, 150, 25);
+//        displayLeaderboard.setBounds(600, 372, 150, 25);
+        myCardsButton.setBounds(600, 339, 150, 25);
+        detectiveNotePad.setBounds(600, 372, 150, 25);
         clientScoreLabel.setBounds(40, 340, 200, 50);
         enterName.setBounds(600, 275, 150, 50);
         textField.setBounds(250, 350, 400, 50);
-//        skinsButton.setBounds(600, 467, 150, 25);
         currentName.setBounds(600, 350, 150, 50);
-        chooseName.setBounds(600, 307, 150, 25);
+//        chooseName.setBounds(600, 307, 150, 25);
         gameLogo.setBounds(0, -100, 800, 800);
         gameLogo.setBounds(0, -100, 800, 800);
         display.setBounds(0, 0, 800, 600);
@@ -948,8 +923,12 @@ public class Client extends JFrame {
         continueToNextRoundButton.setText("Next Scramble");
         joinTheTournamentButton.setText("Join Tournament");
         displayLeaderboard.setText("Leaderboard");
+        myCardsButton.setText("My Cards");
+        detectiveNotePad.setText("Detective Notepad");
         exitTheApplicationButton.setText("Exit");
         displayRules.setText("Rules");
+        myCardsButton.setText("My Cards");
+        detectiveNotePad.setText("Detective Notepad");
         currentName.setText("Name: " + name);
         currentName.setText("Name: " + name);
         chooseName.setText("Choose Name");
@@ -991,25 +970,6 @@ public class Client extends JFrame {
     }
 
     private void updateBoard(String playerName, int row, int col) {
-        // Clear all previous player tags
-        //TODO delete this this extra code was not necessary it was clearing out the board and only showing one player.
-//        for (int r = 0; r < BOARD_SIZE; r++) {
-//            for (int c = 0; c < BOARD_SIZE; c++) {
-//                JLabel label = boardLabels[r][c];
-//                if (label != null && label.getText() != null && label.getText().contains("(")) {
-//                    String text = label.getText();
-//                    if (text.contains("<br>")) {
-//                        // HTML format (room)
-//                        text = text.substring(0, text.indexOf("<br>"));
-//                        label.setText(text);
-//                    } else if (text.contains(" (")) {
-//                        // Plain format (hallway)
-//                        label.setText(text.substring(0, text.indexOf(" (")));
-//                    }
-//                }
-//            }
-//        }
-        //TODO delete this code.
 
         JLabel current = boardLabels[row][col];
         if (current == null) return;

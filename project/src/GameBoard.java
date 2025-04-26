@@ -79,7 +79,6 @@ public class GameBoard {
         }
     }
     public boolean addPlayer(String playerId, String characterName, int row, int col) {
-//        Room room = rooms[row][col];
         Room room = getRoom(row, col);
         if (room == null) return false;
 
@@ -114,8 +113,6 @@ public class GameBoard {
             return false;
         }
 
-//        Room currentRoom = rooms[currentRow][currentCol];
-//        Room targetRoom = rooms[targetRow][targetCol];
         Room currentRoom = getRoom(currentRow, currentCol);
         Room targetRoom = getRoom(targetRow, targetCol);
 
@@ -215,7 +212,6 @@ public class GameBoard {
         }
 
         // Check if there's a room or hallway
-//        if (rooms[newRow][newCol] == null)
         if (getRoom(newRow, newCol) == null) {
             System.out.printf("No room at (%d,%d)%n", newRow, newCol);
             return false;
@@ -266,10 +262,6 @@ public class GameBoard {
         }
         return null;
     }
-
-
-
-
 }
 
 
