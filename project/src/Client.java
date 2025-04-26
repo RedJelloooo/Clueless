@@ -410,24 +410,71 @@ public class Client extends JFrame {
 //                        "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
 //            }
 //        });
+//        detectiveNotePad.addActionListener(e -> {
+//            if (detectiveNotes.isEmpty()) {
+//                JOptionPane.showMessageDialog(this, "You have no notes yet!", "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
+//            } else {
+//                // Create lists to organize
+//                List<String> suspects = new ArrayList<>();
+//                List<String> weapons = new ArrayList<>();
+//                List<String> rooms = new ArrayList<>();
+//
+//                for (String note : detectiveNotes) {
+//                    // Split into who showed what
+//                    String[] parts = note.split(":");
+//                    if (parts.length != 2) continue; // skip bad formats
+//
+//                    String player = parts[0].trim();
+//                    String card = parts[1].trim();
+//
+//                    // Classify based on card name
+//                    if (isSuspect(card)) {
+//                        suspects.add(player + " showed: " + card);
+//                    } else if (isWeapon(card)) {
+//                        weapons.add(player + " showed: " + card);
+//                    } else if (isRoom(card)) {
+//                        rooms.add(player + " showed: " + card);
+//                    }
+//                }
+//
+//                // Build the full detective notebook text
+//                StringBuilder notesBuilder = new StringBuilder();
+//                notesBuilder.append("🔎 Suspects:\n");
+//                for (String s : suspects) {
+//                    notesBuilder.append("• ").append(s).append("\n");
+//                }
+//                notesBuilder.append("\n🔪 Weapons:\n");
+//                for (String w : weapons) {
+//                    notesBuilder.append("• ").append(w).append("\n");
+//                }
+//                notesBuilder.append("\n🏰 Rooms:\n");
+//                for (String r : rooms) {
+//                    notesBuilder.append("• ").append(r).append("\n");
+//                }
+//
+//                JOptionPane.showMessageDialog(this,
+//                        notesBuilder.toString(),
+//                        "Detective Notepad",
+//                        JOptionPane.INFORMATION_MESSAGE);
+//            }
+//        });
         detectiveNotePad.addActionListener(e -> {
-            if (detectiveNotes.isEmpty()) {
+            if (detectiveNotes.isEmpty() && myCards.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "You have no notes yet!", "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                // Create lists to organize
                 List<String> suspects = new ArrayList<>();
                 List<String> weapons = new ArrayList<>();
                 List<String> rooms = new ArrayList<>();
+                List<String> myOwnCards = new ArrayList<>();
 
+                // Parse detective notes (cards shown by other players)
                 for (String note : detectiveNotes) {
-                    // Split into who showed what
                     String[] parts = note.split(":");
-                    if (parts.length != 2) continue; // skip bad formats
+                    if (parts.length != 2) continue;
 
                     String player = parts[0].trim();
                     String card = parts[1].trim();
 
-                    // Classify based on card name
                     if (isSuspect(card)) {
                         suspects.add(player + " showed: " + card);
                     } else if (isWeapon(card)) {
@@ -437,8 +484,28 @@ public class Client extends JFrame {
                     }
                 }
 
-                // Build the full detective notebook text
+                // Parse your own cards
+                if (!myCards.isEmpty()) {
+                    String[] cards = myCards.replace("[", "").replace("]", "").split(",");
+                    for (String card : cards) {
+                        card = card.trim();
+                        if (isSuspect(card) || isWeapon(card) || isRoom(card)) {
+                            myOwnCards.add(card);
+                        }
+                    }
+                }
+
+                // Build full detective notepad text
                 StringBuilder notesBuilder = new StringBuilder();
+
+                if (!myOwnCards.isEmpty()) {
+                    notesBuilder.append("📝 My Cards:\n");
+                    for (String c : myOwnCards) {
+                        notesBuilder.append("• ").append(c).append("\n");
+                    }
+                    notesBuilder.append("\n");
+                }
+
                 notesBuilder.append("🔎 Suspects:\n");
                 for (String s : suspects) {
                     notesBuilder.append("• ").append(s).append("\n");
@@ -458,6 +525,7 @@ public class Client extends JFrame {
                         JOptionPane.INFORMATION_MESSAGE);
             }
         });
+
 
 
 
