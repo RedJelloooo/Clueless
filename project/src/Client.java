@@ -883,6 +883,8 @@ public class Client extends JFrame {
         add(clientScoreLabel);
         add(scrambleForCurrentRoundLabel);
         add(gameBackgroundLabel);
+        add(myCardsButton);
+        add(detectiveNotePad);
         add(menu);
         add(display);
         add(makeSuggestionButton);
@@ -893,11 +895,6 @@ public class Client extends JFrame {
         if (scrollPane != null) {
             add(scrollPane); // must be last to control visibility correctly
         }
-
-        add(myCardsButton);
-        add(detectiveNotePad);
-        setComponentZOrder(myCardsButton, 0);
-        setComponentZOrder(detectiveNotePad, 0);
     }
 
     /**
