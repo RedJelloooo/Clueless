@@ -489,6 +489,7 @@ public class Server extends JFrame {
                                 output.flush();
 
                                 broadcast(characterName + " has made a CORRECT accusation and won the game!");
+                                broadcast("GAME_OVER " + characterName);
                                 System.out.println(characterName + " WON the game!");
                                 // You could optionally shut down the server or mark the game as over here
                             } else {
@@ -727,10 +728,9 @@ public class Server extends JFrame {
             }
 
             broadcast(winner.characterName + " has WON the game because all other players were eliminated!");
+            broadcast("GAME_OVER " + winner.characterName);
             System.out.println(winner.characterName + " has WON by default!");
 
-            // Optional: Stop the server/game here if you want
-            // System.exit(0);
         }
     }
 

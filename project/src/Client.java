@@ -929,6 +929,18 @@ public class Client extends JFrame {
                     Toolkit.getDefaultToolkit().beep();
                 }
 
+                if (message.startsWith("GAME_OVER")) {
+                    String winner = message.substring("GAME_OVER".length()).trim();
+                    JOptionPane.showMessageDialog(this,
+                            "🏆 " + winner + " has won the game! 🏆\nThe game will now close.",
+                            "Game Over",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    sendData(Commands.PLAYER_LEFT.toString()); // Politely tell server you're leaving
+                    System.exit(0); // Exit the client
+                }
+
+
                 if (message.equals("PROMPT_SUGGESTION")) {
                     SwingUtilities.invokeLater(() -> {
                         detectiveNotePad.doClick(); // <-- open Detective Notepad automatically
@@ -1059,28 +1071,6 @@ public class Client extends JFrame {
                             "Your Cards", JOptionPane.INFORMATION_MESSAGE);
                 }
 
-
-
-//                if (message.contains("showed you:")) {
-//                    // Example message: "MrsWhite showed you: Revolver"
-//                    String[] parts = message.split("showed you:");
-//                    String disapprovingPlayer = parts[0].trim(); // e.g., "MrsWhite"
-//                    String shownCard = parts[1].trim();           // e.g., "Revolver"
-//
-//                    // Create a detective note entry like "MrsWhite: Revolver"
-//                    String detectiveEntry = disapprovingPlayer + ": " + shownCard;
-//
-//                    // Only add it if it’s not already in the detective notes
-//                    if (!detectiveNotes.contains(detectiveEntry)) {
-//                        detectiveNotes.add(detectiveEntry);
-//                    }
-//
-//                    // Show a popup notifying the player
-//                    JOptionPane.showMessageDialog(this,
-//                            disapprovingPlayer + " disproved your suggestion by showing you: " + shownCard,
-//                            "Detective Note Updated",
-//                            JOptionPane.INFORMATION_MESSAGE);
-//                }
 
                 if (message.contains("showed you:")) {
                     String[] parts = message.split("showed you:");
