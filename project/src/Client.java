@@ -11,22 +11,30 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
+import javax.swing.Timer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.Point;
+import java.util.List;
+
 
 
 /**
- * @author Brandon Cano (Server and Client Logic)
- * @author Alex Arand (GUI Implementation)
- * This is the client class that handles our game on the player end
- * This sets up a GUI with multiple backgrounds as well as
- * keeps track of the player score and round
+ * The Client class represents the player's interface for the Clue-Less game.
+ * It handles the GUI setup, networking with the server, gameplay actions
+ * (such as moving, suggesting, and accusing), and interaction with detective notes.
+ *
+ * Players use this client to connect to a server, select characters,
+ * make moves and suggestions, view their cards, and keep track of other players' actions.
+ *
+ * Authors:
+ *  - Brandon Cano (Server and Client Logic)
+ *  - Alex Arand (GUI Implementation)
+ *  - Albert Rojas (GUI Implementation)
  */
+
 public class Client extends JFrame {
     // networking parts
     private String[] scrambles = new String[5];
@@ -48,6 +56,9 @@ public class Client extends JFrame {
     );
     private int currentPlayerRow = -1;
     private int currentPlayerCol = -1;
+    private String myCards = "";
+    private final java.util.List<String> detectiveNotes = new ArrayList<>();
+    private final Map<String, Map<String, Boolean>> detectiveTable = new HashMap<>();
 
 
 
@@ -128,10 +139,10 @@ public class Client extends JFrame {
     private Clip clip;
 
     /**
-     * creates a GUI interface on the client
-     * also sends s a message to the server that the client is connected
+     * Creates the client GUI, initializes the network settings,
+     * and sets up the game components such as buttons, panels, and timers.
      *
-     * @param host - the IP address of the host to connect to
+     * @param host the IP address of the server to connect to
      */
     public Client(String host) {
         // set name of window
@@ -154,6 +165,8 @@ public class Client extends JFrame {
         skinsButton = new JButton();
         chooseName = new JButton();
         displayRules = new JButton();
+        detectiveNotePad.setToolTipText("View all clues you've collected from players!");
+
 
         timeRemainingLabel = new JLabel(seconds + " seconds remaining!");
         currentRoundLabel = new JLabel("Round " + clientRound);
@@ -261,7 +274,8 @@ public class Client extends JFrame {
             }
         }
 
-//        add(boardPanel);
+        add(boardPanel);
+        boardPanel.setVisible(false);
 
 
         URL rulesURL = getClass().getResource("rules.png");
@@ -317,9 +331,10 @@ public class Client extends JFrame {
             String selected = (String) characterDropdown.getSelectedItem();
             name = selected;
             sendData("JOIN " + selected);
-            add(boardPanel);
+            myCardsButton.setVisible(true);
+            detectiveNotePad.setVisible(true);
+           boardPanel.setVisible(true); //
         });
-
 
         makeSuggestionButton.addActionListener(e -> {
             String[] suspects = {
@@ -333,19 +348,34 @@ public class Client extends JFrame {
 
             JComboBox<String> suspectDropdown = new JComboBox<>(suspects);
             JComboBox<String> weaponDropdown = new JComboBox<>(weapons);
-            JPanel panel = new JPanel(new GridLayout(2, 2));
+            JButton notesButton = new JButton("Detective Notepad");
+
+            // Action for the Detective Notes button
+            notesButton.addActionListener(event -> detectiveNotePad.doClick());
+
+            JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5)); // 3 rows, 2 columns, nice spacing
             panel.add(new JLabel("Suspect:"));
             panel.add(suspectDropdown);
             panel.add(new JLabel("Weapon:"));
             panel.add(weaponDropdown);
+            panel.add(new JLabel("")); // Empty cell for alignment
+            panel.add(notesButton);
 
-            int result = JOptionPane.showConfirmDialog(this, panel, "Make a Suggestion", JOptionPane.OK_CANCEL_OPTION);
+            int result = JOptionPane.showConfirmDialog(
+                    this,
+                    panel,
+                    "Make a Suggestion",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
             if (result == JOptionPane.OK_OPTION) {
                 String suspect = (String) suspectDropdown.getSelectedItem();
                 String weapon = (String) weaponDropdown.getSelectedItem();
                 sendData("SUGGEST " + suspect + " " + weapon);
             }
         });
+
 
         makeAccusationButton.addActionListener(e -> {
             String[] suspects = {
@@ -383,6 +413,114 @@ public class Client extends JFrame {
                 sendData("ACCUSE " + suspect + " " + weapon + " " + room);
             }
         });
+
+        myCardsButton.addActionListener(e -> {
+            if (myCards.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "You have no cards yet!", "My Cards", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Your cards are:\n" + myCards, "My Cards", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+
+        detectiveNotePad.addActionListener(e -> {
+            Set<String> playersSet = new HashSet<>();
+            for (Map<String, Boolean> map : detectiveTable.values()) {
+                playersSet.addAll(map.keySet());
+            }
+            playersSet.add("Me"); // always include Me
+            List<String> playersList = new ArrayList<>(playersSet);
+            Collections.sort(playersList);
+
+            String[] columnNames = new String[playersList.size() + 1];
+            columnNames[0] = "Card";
+            for (int i = 0; i < playersList.size(); i++) {
+                columnNames[i + 1] = playersList.get(i);
+            }
+
+            List<String> allCards = Arrays.asList(
+                    "MissScarlet", "ColonelMustard", "MrsWhite",
+                    "MrGreen", "MrsPeacock", "ProfessorPlum",
+                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench",
+                    "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+                    "Conservatory", "Ballroom", "Kitchen"
+            );
+
+            Object[][] data = new Object[allCards.size()][playersList.size() + 1];
+            for (int row = 0; row < allCards.size(); row++) {
+                String card = allCards.get(row);
+                data[row][0] = card;
+                for (int col = 0; col < playersList.size(); col++) {
+                    String player = playersList.get(col);
+                    boolean marked = detectiveTable.containsKey(card) &&
+                            detectiveTable.get(card).getOrDefault(player, false);
+                    data[row][col + 1] = marked ? "✔" : ""; // Default to checkmark if true, blank otherwise
+                }
+            }
+
+            DefaultTableModel model = new DefaultTableModel(data, columnNames) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return column != 0; // Only players' columns are editable
+                }
+            };
+
+            JTable table = new JTable(model);
+            table.setRowHeight(25);
+            table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
+            table.setFont(new Font("SansSerif", Font.PLAIN, 12));
+
+            // 🔵 NEW: Add mouse click listener to cycle through ✔ -> ✖ -> ◯ -> ""
+            table.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    int row = table.rowAtPoint(evt.getPoint());
+                    int col = table.columnAtPoint(evt.getPoint());
+                    if (col > 0) { // prevent editing card names
+                        String current = (String) model.getValueAt(row, col);
+                        String next;
+                        if (current == null || current.isEmpty()) {
+                            next = "✔";
+                        } else if (current.equals("✔")) {
+                            next = "✖";
+                        } else if (current.equals("✖")) {
+                            next = "◯";
+                        } else {
+                            next = ""; // go back to blank
+                        }
+                        model.setValueAt(next, row, col);
+                    }
+                }
+            });
+
+            JScrollPane scrollPane = new JScrollPane(table);
+
+            JButton saveButton = new JButton("Save and Close");
+            saveButton.addActionListener(ev -> {
+                for (int row = 0; row < model.getRowCount(); row++) {
+                    String card = (String) model.getValueAt(row, 0);
+                    for (int col = 1; col < model.getColumnCount(); col++) {
+                        String player = columnNames[col];
+                        String mark = (String) model.getValueAt(row, col);
+
+                        detectiveTable.putIfAbsent(card, new HashMap<>());
+                        detectiveTable.get(card).put(player, "✔".equals(mark)); // Only ✔ counts as true internally
+                    }
+                }
+                JOptionPane.showMessageDialog(Client.this, "Detective Notes Saved!", "Saved", JOptionPane.INFORMATION_MESSAGE);
+            });
+
+            JDialog dialog = new JDialog(Client.this, "Detective Notepad", true);
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.add(scrollPane, BorderLayout.CENTER);
+            panel.add(saveButton, BorderLayout.SOUTH);
+
+            dialog.getContentPane().add(panel);
+            dialog.setSize(650, 450);
+            dialog.setLocationRelativeTo(Client.this);
+            dialog.setVisible(true);
+        });
+
 
 
 
@@ -478,6 +616,8 @@ public class Client extends JFrame {
             chooseName.setVisible(false);
             displayRules.setVisible(false);
             rules.setVisible(true);
+            myCardsButton.setVisible(true);
+            detectiveNotePad.setVisible(true);
 
             if (rules != null && rules.getIcon() instanceof ImageIcon imageIcon) {
                 int imageWidth = imageIcon.getIconWidth();
@@ -504,7 +644,8 @@ public class Client extends JFrame {
             exitFromGameToMainMenuButton.setBounds(620, 500, 150, 50);
 
             audioEnabler();
-
+            myCardsButton.setVisible(true);
+            detectiveNotePad.setVisible(true);
             exitFromGameToMainMenuButton.setVisible(true);
             exitTheApplicationButton.setVisible(false);
             joinTheTournamentButton.setVisible(false);
@@ -558,7 +699,8 @@ public class Client extends JFrame {
     }
 
     /**
-     * Will attempt to connect the client to the server and set up the streams for the IO.
+     * Establishes a socket connection to the server and sets up input/output streams.
+     * Then listens for and processes messages from the server.
      */
     public void runClient() {
         try {
@@ -577,9 +719,9 @@ public class Client extends JFrame {
     }
 
     /**
-     * This will take any message and process it so that it can be shown in the client side.
+     * Processes incoming messages from the server and updates the client GUI and state accordingly.
      *
-     * @throws IOException for when the streams fail
+     * @throws IOException if an I/O error occurs when reading server messages
      */
     private void processConnection() throws IOException {
         sendData(Commands.PLAYER_JOINED.toString());
@@ -608,9 +750,117 @@ public class Client extends JFrame {
                     application.setVisible(true);
                 }
 
-                if (message.startsWith("You WON!") || message.startsWith("Your accusation was incorrect")) {
-                    JOptionPane.showMessageDialog(this, message, "Accusation Result", JOptionPane.INFORMATION_MESSAGE);
+                if (message.contains("suggests:")) {
+                    JOptionPane.showMessageDialog(this,
+                            message,
+                            "New Suggestion Made",
+                            JOptionPane.INFORMATION_MESSAGE);
                 }
+
+
+                if (message.startsWith("You WON!")) {
+                    JOptionPane.showMessageDialog(this, message, "🎉 You Won the Game!", JOptionPane.INFORMATION_MESSAGE);
+
+                    // Disable buttons because game is over
+                    makeSuggestionButton.setEnabled(false);
+                    makeAccusationButton.setEnabled(false);
+                    secretPassageButton.setEnabled(false);
+
+
+                    int response = JOptionPane.showConfirmDialog(
+                            this,
+                            "Would you like to play again?",
+                            "Play Again?",
+                            JOptionPane.YES_NO_OPTION
+                    );
+
+                    if (response == JOptionPane.YES_OPTION) {
+                        this.dispose(); // Close the current window
+                        Client newClient = new Client(chatServer); // Create a fresh client
+                        newClient.setTitle("Client - New Game");
+                        newClient.setSize(800, 600);
+                        newClient.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                        newClient.setVisible(true);
+                        newClient.setResizable(false);
+                        newClient.setLocationRelativeTo(null);
+                        newClient.runClient(); // Reconnect to server
+                    } else {
+                        sendData(Commands.PLAYER_LEFT.toString());
+                        System.exit(0);
+                    }
+                }
+
+
+
+                if (message.startsWith("Your accusation was incorrect")) {
+                    JOptionPane.showMessageDialog(this, message, "❌ Incorrect Accusation", JOptionPane.WARNING_MESSAGE);
+                }
+
+
+                if (message.equals("YOUR_TURN")) {
+                    // Enable your move, suggest, and accuse buttons
+                    makeSuggestionButton.setEnabled(true);
+                    makeAccusationButton.setEnabled(true);
+                    secretPassageButton.setEnabled(true);
+
+                    JOptionPane.showMessageDialog(this,
+                            "It's your turn!💃🕺",
+                            "Your Turn",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    //Beep Sound
+                    Toolkit.getDefaultToolkit().beep();
+                }
+
+                if (message.startsWith("GAME_OVER")) {
+                    String winner = message.substring("GAME_OVER".length()).trim();
+                    JOptionPane.showMessageDialog(this,
+                            "🏆 " + winner + " has won the game! 🏆\nThe game will now close.",
+                            "Game Over",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    sendData(Commands.PLAYER_LEFT.toString()); // Politely tell server you're leaving
+                    System.exit(0); // Exit the client
+                }
+
+
+                if (message.equals("PROMPT_SUGGESTION")) {
+                    SwingUtilities.invokeLater(() -> {
+                        detectiveNotePad.doClick(); // <-- open Detective Notepad automatically
+                        makeSuggestionButton.doClick(); // <-- then pop the Suggestion menu
+                    });
+                }
+
+
+
+                if (message.equals("SUGGESTION_NOT_DISPROVED_BY_PREVIOUS")) {
+                    JOptionPane.showMessageDialog(this,
+                            "The player before you could not disprove your suggestion.",
+                            "Suggestion Not Disproved",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+
+                if (message.equals("PROMPT_ACCUSATION_OR_END")) {
+                    SwingUtilities.invokeLater(() -> {
+                        int response = JOptionPane.showOptionDialog(
+                                this,
+                                "Would you like to make an accusation or end your turn?",
+                                "Choose an Action",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.QUESTION_MESSAGE,
+                                null,
+                                new String[]{"Make Accusation", "End Turn"},
+                                "End Turn"
+                        );
+
+                        if (response == JOptionPane.YES_OPTION) {
+                            makeAccusationButton.doClick(); // auto-clicks the Accusation button
+                        } else {
+                            sendData("END_TURN"); // Send new command to the server
+                        }
+                    });
+                }
+
 
 
                 //  NEW: Handle custom game messages from Clue-Less server
@@ -663,13 +913,90 @@ public class Client extends JFrame {
                         String playerName = tokens[0];
                         int row = Integer.parseInt(tokens[1]);
                         int col = Integer.parseInt(tokens[2]);
-                        updateBoard(playerName, row, col);  // ✅ use the correct playerName
+                        updateBoard(playerName, row, col);  // use the correct playerName
                     }
                 }
 
 
+//                if (message.startsWith("YOUR_CARDS")) {
+//                    String cardsList = message.substring("YOUR_CARDS".length()).trim();
+//                    myCards = cardsList; // Save the cards for later
+//                    JOptionPane.showMessageDialog(this, "Your cards are:\n" + cardsList,
+//                            "Your Cards", JOptionPane.INFORMATION_MESSAGE);
+//                }
+                if (message.startsWith("YOUR_CARDS")) {
+                    String cardsList = message.substring("YOUR_CARDS".length()).trim();
+                    myCards = cardsList; // Save the cards for later
+
+                    // ✨ NEW: Populate ALL possible cards into detectiveTable
+                    List<String> allCards = Arrays.asList(
+                            "MissScarlet", "ColonelMustard", "MrsWhite",
+                            "MrGreen", "MrsPeacock", "ProfessorPlum",
+                            "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench",
+                            "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+                            "Conservatory", "Ballroom", "Kitchen"
+                    );
+
+                    for (String card : allCards) {
+                        detectiveTable.putIfAbsent(card, new HashMap<>()); // create row for card
+                    }
+
+                    //  Mark "Me" as owning only the cards I actually have
+                    String[] myOwnCards = cardsList.replace("[", "").replace("]", "").split(",");
+                    for (String card : myOwnCards) {
+                        card = card.trim();
+                        if (!card.isEmpty()) {
+                            detectiveTable.get(card).put("Me", true); // ✅ check mark only my cards
+                        }
+                    }
+
+                    JOptionPane.showMessageDialog(this, "Your cards are:\n" + cardsList,
+                            "Your Cards", JOptionPane.INFORMATION_MESSAGE);
+                }
 
 
+                if (message.contains("showed you:")) {
+                    String[] parts = message.split("showed you:");
+                    String disapprovingPlayer = parts[0].trim();
+                    String shownCard = parts[1].trim();
+
+                    // Create a detective note entry like "MrsWhite: Revolver"
+                    String detectiveEntry = disapprovingPlayer + ": " + shownCard;
+
+                    if (!detectiveNotes.contains(detectiveEntry)) {
+                        detectiveNotes.add(detectiveEntry);
+                    }
+
+                    //  NEW: Update detectiveTable
+                    detectiveTable.putIfAbsent(shownCard, new HashMap<>()); // just in case
+                    detectiveTable.get(shownCard).put(disapprovingPlayer, true); //  check mark under that player
+
+                    JOptionPane.showMessageDialog(this,
+                            disapprovingPlayer + " disproved your suggestion by showing you: " + shownCard,
+                            "Detective Note Updated",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+
+
+                if (message.startsWith("DISPROVE_OPTIONS")) {
+                    SwingUtilities.invokeLater(() -> {
+                        detectiveNotePad.doClick(); // <-- pop open the Detective Notes first
+
+                        String[] options = message.substring("DISPROVE_OPTIONS".length()).trim().split(",");
+                        String selectedCard = (String) JOptionPane.showInputDialog(
+                                this,
+                                "Choose a card to disprove the suggestion:",
+                                "Disprove Suggestion",
+                                JOptionPane.PLAIN_MESSAGE,
+                                null,
+                                options,
+                                options[0]
+                        );
+                        if (selectedCard != null) {
+                            sendData("DISPROVE_SELECTED " + selectedCard);
+                        }
+                    });
+                }
             } catch (ClassNotFoundException classNotFoundException) {
                 classNotFoundException.printStackTrace();
             }
@@ -677,7 +1004,7 @@ public class Client extends JFrame {
     }
 
     /**
-     * This will close the connection of the client.
+     * Closes the network connection by shutting down input and output streams and the socket.
      */
     private void closeConnection() {
         try {
@@ -690,9 +1017,9 @@ public class Client extends JFrame {
     }
 
     /**
-     * This will take the message entered in and send it to the server.
+     * Sends a message (command or data) to the server through the output stream.
      *
-     * @param message text to be sent to server
+     * @param message the text message to be sent to the server
      */
     private void sendData(String message) {
         try {
@@ -704,7 +1031,7 @@ public class Client extends JFrame {
     }
 
     /**
-     * starts the timer for the game
+     * Starts the timer that controls the time per round for the original word game.
      */
     private void startTimer() {
         secondsInGame = Client.timePerRound;
@@ -720,9 +1047,8 @@ public class Client extends JFrame {
     }
 
     /**
-     * Starts the round for the word game
-     * creates new labels and hides the unused labels
-     * also starts the time
+     * Initializes and starts a new round in the word game mode.
+     * Sets up relevant labels and timers for the round.
      */
     private void startRound() {
 
@@ -747,9 +1073,8 @@ public class Client extends JFrame {
     }
 
     /**
-     * Ends the current round of the word game
-     * and shows the user a menu to play a new shuffle
-     * or exit the game
+     * Ends the current round of the word game and presents options
+     * to continue to the next scramble or exit to the main menu.
      */
     private void endRound() {
         sendData("#" + name + " " + clientScore + " " + clientRound);
@@ -795,6 +1120,8 @@ public class Client extends JFrame {
      */
     private void mainMenuInitialize() {
 //        rules.setVisible(false);
+        myCardsButton.setVisible(true);
+        detectiveNotePad.setVisible(true);
         scrollPane.setVisible(false);
         displayRules.setVisible(true);
         menu.setVisible(true);
@@ -820,8 +1147,6 @@ public class Client extends JFrame {
         gameLogo.setVisible(false);
         gameLogo.setVisible(false);
         display.setVisible(true);
-        myCardsButton.setVisible(true);
-        detectiveNotePad.setVisible(true);
         if (scrollPane != null) scrollPane.setVisible(false);
     }
 
@@ -852,18 +1177,21 @@ public class Client extends JFrame {
         add(clientScoreLabel);
         add(scrambleForCurrentRoundLabel);
         add(gameBackgroundLabel);
-        add(menu);
-        add(display);
-        add(makeSuggestionButton);
         add(myCardsButton);
         add(detectiveNotePad);
+        add(makeSuggestionButton);
+        add(menu);
+        add(display);
 
+        makeSuggestionButton.setEnabled(false);
+        makeAccusationButton.setEnabled(false);
+        secretPassageButton.setEnabled(false);
 
+        mainMenuInitialize();
 
         if (scrollPane != null) {
             add(scrollPane); // must be last to control visibility correctly
         }
-
     }
 
     /**
@@ -960,15 +1288,27 @@ public class Client extends JFrame {
         }
     }
 
-
+    /**
+     * Hides all major screens and components when navigating between different GUI states.
+     */
     private void hideAllScreens() {
         menu.setVisible(false);
+        myCardsButton.setVisible(true);
+        detectiveNotePad.setVisible(true);
         gameBackgroundLabel.setVisible(false);
         display.setVisible(false);
+
         if (scrollPane != null) scrollPane.setVisible(false);
         gameLogo.setVisible(false);
     }
 
+    /**
+     * Updates the visual position of a player on the board based on their row and column.
+     *
+     * @param playerName the name of the player to update
+     * @param row the new row position
+     * @param col the new column position
+     */
     private void updateBoard(String playerName, int row, int col) {
 
         JLabel current = boardLabels[row][col];
@@ -1011,7 +1351,12 @@ public class Client extends JFrame {
         }
     }
 
-
+    /**
+     * Converts a character name into a set of initials (e.g., "MissScarlet" -> "MS").
+     *
+     * @param characterName the full character name
+     * @return the initials in uppercase
+     */
     private String getInitials(String characterName) {
         // Convert names like "MissScarlet" to "MS", "ProfessorPlum" to "PP"
         StringBuilder initials = new StringBuilder();
@@ -1021,7 +1366,36 @@ public class Client extends JFrame {
         return initials.toString().toUpperCase();
     }
 
+    /**
+     * Determines if a given card is a suspect.
+     *
+     * @param card the name of the card
+     * @return true if the card is a suspect, false otherwise
+     */
+    private boolean isSuspect(String card) {
+        return Arrays.asList("MissScarlet", "ColonelMustard", "MrsWhite", "MrGreen", "MrsPeacock", "ProfessorPlum")
+                .contains(card);
+    }
 
+    /**
+     * Determines if a given card is a weapon.
+     *
+     * @param card the name of the card
+     * @return true if the card is a weapon, false otherwise
+     */
+    private boolean isWeapon(String card) {
+        return Arrays.asList("Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench")
+                .contains(card);
+    }
 
-
+    /**
+     * Determines if a given card is a room.
+     *
+     * @param card the name of the card
+     * @return true if the card is a room, false otherwise
+     */
+    private boolean isRoom(String card) {
+        return Arrays.asList("Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room", "Conservatory", "Ballroom", "Kitchen")
+                .contains(card);
+    }
 }

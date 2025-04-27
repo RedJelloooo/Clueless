@@ -3,8 +3,7 @@ import util.Score;
 import util.TournamentScoreboard;
 import util.WordFile;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 import javax.swing.*;
@@ -13,21 +12,23 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.awt.Point;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * Server class creates a server for players to connect to
- * the players are each a thread with their own score and round number
- * The server also calculates the score for the players and
- * generally ties everything together
+ * The Server class manages the Clue-Less game server.
+ *
+ * It accepts client connections, handles player actions (joining, moving, suggesting, accusing),
+ * manages the game board state, deals cards, enforces turns, and broadcasts updates to all clients.
+ *
+ * Each connected player runs on a separate thread for simultaneous gameplay.
  */
 public class Server extends JFrame {
 
     private final GameBoard gameBoard = new GameBoard();
     private int playerCount = 0;
+    private boolean cardsDealt = false;
     private final static int MAX_PLAYERS = 16; //can possibly get rid of this
     private final JTextArea displayArea;
     private ServerSocket server;
@@ -36,6 +37,9 @@ public class Server extends JFrame {
     private final String[] scrambles;
     private final TournamentScoreboard tournamentScoreboard;
     private String leaderboard = "";
+    private int currentTurnIndex = 0; // index into players list
+    private boolean gameStarted = false;
+    private String lastSuggester = null;
     private static final Map<String, int[]> startingPositions = Map.of(
             "MissScarlet", new int[]{4, 0},
             "ColonelMustard", new int[]{0, 2},
@@ -48,9 +52,8 @@ public class Server extends JFrame {
 
 
     /**
-     * creates a GUI interface for the server side.
-     * also creates an array BlockingQueue to store the
-     * various threads for the players.
+     * Creates the Server GUI and initializes server resources,
+     * including the game board, scramble data, and thread pool for players.
      */
     public Server() {
         super("Server"); // title of the GUI
@@ -67,8 +70,7 @@ public class Server extends JFrame {
     }
 
     /**
-     * Will run the server by creating a new socket and then attempt
-     * to accept connections from clients
+     * Starts the server, listening for incoming player connections on the designated port.
      */
     public void runServer() {
         try {
@@ -88,9 +90,9 @@ public class Server extends JFrame {
     }
 
     /**
-     * This method gets connection from clients that are attempting to join the server.
-     * This also adds a new thread to the blocking queue for the new player.
-     * @throws IOException - if adding another player fails
+     * Continuously accepts new player connections and starts a thread for each new player.
+     *
+     * @throws IOException if an error occurs while accepting connections
      */
     private void getConnections() throws IOException {
         while (true) {
@@ -109,16 +111,18 @@ public class Server extends JFrame {
     }
 
     /**
-     * displays a message from the client
-     * @param message - message to display
+     * Displays a message in the server GUI text area.
+     *
+     * @param message the message to display
      */
     private void displayMessage(final String message) {
         SwingUtilities.invokeLater(() -> displayArea.append(message));
     }
 
     /**
-     * closes the server
-     * @throws IOException - if there is an error closing the server
+     * Closes the server socket, releasing network resources.
+     *
+     * @throws IOException if an error occurs while closing the server
      */
     private void closeServer() throws IOException {
         try {
@@ -179,7 +183,8 @@ public class Server extends JFrame {
                             if (start == null) {
                                 output.writeObject("FAILED JOIN: Unknown character");
                                 output.flush();
-                                broadcastPlayerPositions(); // TODO maybe delete if errors start occurring
+                                broadcastPlayerPositions();
+
                                 continue;
                             }
 
@@ -193,10 +198,13 @@ public class Server extends JFrame {
                             }
                             output.flush();
                             broadcastPlayerPositions();  // <-- NEW: update all clients with everyone's positions
+                            if (!cardsDealt && players.size() >= 2) { // TODO or >= 3 or >= 6 if you want full table
+                                dealCardsToPlayers();
+                                cardsDealt = true;
+                            }
+
+
                         }
-
-
-
 
 
                         // MOVE_DIRECTION command (up, down, left, right)
@@ -206,6 +214,13 @@ public class Server extends JFrame {
                                 output.flush();
                                 continue;
                             }
+
+                            if (!characterName.equals(players.get(currentTurnIndex).characterName)) {
+                                output.writeObject("ERROR Not your turn.");
+                                output.flush();
+                                continue;
+                            }
+
 
                             try {
                                 String direction = clientCommand.split(" ")[1];
@@ -245,8 +260,16 @@ public class Server extends JFrame {
                                     output.writeObject("MOVED " + moved + " to (" + newRow + "," + newCol + ")");
                                     if (moved) {
                                         broadcastPlayerPositions();
-                                    }
 
+                                        // NEW: Check if the player moved into a room
+                                        Room newRoom = gameBoard.getRoom(newRow, newCol);
+                                        if (newRoom != null && !newRoom.getName().equals("Hallway")) {
+                                            output.writeObject("PROMPT_SUGGESTION");
+                                            output.flush();
+                                        }else {
+                                            nextTurn();
+                                        }
+                                    }
 
                                 } else {
                                     output.writeObject("MOVED false (Illegal move in direction: " + direction + ")");
@@ -266,6 +289,13 @@ public class Server extends JFrame {
                                 output.flush();
                                 continue;
                             }
+
+                            if (!characterName.equals(players.get(currentTurnIndex).characterName)) {
+                                output.writeObject("ERROR Not your turn.");
+                                output.flush();
+                                continue;
+                            }
+
 
                             try {
                                 String[] parts = clientCommand.split(" ");
@@ -299,17 +329,21 @@ public class Server extends JFrame {
                                 System.out.println(characterName + " made a suggestion: " +
                                         suspect + " with the " + weapon + " in the " + currentRoom.getName());
 
+                                lastSuggester = characterName;
+
                                 // Move suspect (character) to current room
                                 PlayerState suspectPlayer = gameBoard.getPlayerState(suspect);
                                 if (suspectPlayer != null) {
                                     int oldRow = suspectPlayer.getRow();
                                     int oldCol = suspectPlayer.getCol();
 
-                                    Room oldRoom = gameBoard.getRoom(suspect);
+                                    Room oldRoom = gameBoard.getRoom(oldRow, oldCol);
                                     if (oldRoom != null) oldRoom.removeOccupant(suspect);
 
                                     suspectPlayer.setPosition(currentRoom.getRow(), currentRoom.getCol());
                                     currentRoom.addOccupant(suspect);
+
+                                    broadcastPlayerPositions();
 
                                 }
 
@@ -317,53 +351,46 @@ public class Server extends JFrame {
                                 output.writeObject(msg); // Send confirmation to suggester
                                 output.flush();
 
-                                // TODO: In future - notify other players to disprove
-                                // Step 4: Check if other players can disprove the suggestion
+                                broadcast(characterName + " suggests: " + suspect + " with the " + weapon + " in the " + roomName);
+
                                 List<String> suggestionCards = List.of(suspect, weapon, roomName);
 
-                                boolean disproved = false;
-                                for (Player p : players) {
-                                    // skip the suggester
-                                    if (p.characterName.equals(characterName)) continue;
+                                // Get the left player (the player before the suggester)
+                                Player leftPlayer = players.get((currentTurnIndex - 1 + players.size()) % players.size());
+                                PlayerState leftState = gameBoard.getPlayerState(leftPlayer.characterName);
 
-                                    PlayerState otherState = gameBoard.getPlayerState(p.characterName);
-                                    if (otherState == null) continue;
-
-                                    for (String card : otherState.getCards()) {
+                                if (leftState != null) {
+                                    List<String> matches = new ArrayList<>();
+                                    for (String card : leftState.getCards()) {
                                         if (suggestionCards.contains(card)) {
-                                            // Found someone who can disprove — send only to that player
-                                            try {
-                                                p.output.writeObject("You can disprove " + characterName + "'s suggestion. Reveal: " + card);
-                                                p.output.flush();
-
-                                                // Notify suggester
-                                                output.writeObject("Your suggestion was disproved by " + p.characterName + " showing: " + card);
-                                                output.flush();
-
-                                                System.out.println(p.characterName + " disproved the suggestion with: " + card);
-                                                disproved = true;
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                            }
-                                            break;
+                                            matches.add(card);
                                         }
                                     }
 
-                                    if (disproved) break; // Stop once someone disproves
+                                    if (!matches.isEmpty()) {
+                                        // Send dropdown menu to the left player
+                                        leftPlayer.output.writeObject("DISPROVE_OPTIONS " + String.join(",", matches));
+                                        leftPlayer.output.flush();
+                                    } else {
+                                        broadcast("SUGGESTION_NOT_DISPROVED_BY_PREVIOUS"); // NEW LINE
+                                        broadcast(leftPlayer.characterName + " cannot disprove the suggestion.");
+                                        output.writeObject("PROMPT_ACCUSATION_OR_END");
+                                        output.flush();
+
+                                    }
+
+
                                 }
 
-                                if (!disproved) {
-                                    output.writeObject("No one could disprove your suggestion.");
-                                    output.flush();
-                                    System.out.println("Suggestion could not be disproved.");
-                                }
-                                broadcastPlayerPositions(); // ✅ To reflect suspect movement to all players
+
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                                 output.writeObject("ERROR Could not process suggestion.");
                                 output.flush();
                             }
                         }
+
+
 
                         if (clientCommand.equals("SECRET_PASSAGE")) {
                             PlayerState player = gameBoard.getPlayerState(characterName);
@@ -406,7 +433,26 @@ public class Server extends JFrame {
                             broadcastPlayerPositions();
                         }
 
+                        if (clientCommand.equals("END_TURN")) {
+                            nextTurn();
+                        }
 
+                        if (clientCommand.startsWith("DISPROVE_SELECTED")) {
+                            String cardShown = clientCommand.split(" ", 2)[1];
+
+                            broadcast(characterName + " disproved the suggestion by showing a card.");
+
+                            Player suggester = findPlayerByName(lastSuggester);
+                            if (suggester != null) {
+                                suggester.output.writeObject(characterName + " showed you: " + cardShown);
+                                suggester.output.flush();
+
+                                // IMPORTANT: Give suggester the choice AFTER disproof
+                                suggester.output.writeObject("PROMPT_ACCUSATION_OR_END");
+                                suggester.output.flush();
+                            }
+
+                        }
 
                         if (clientCommand.startsWith("ACCUSE")) {
                             if (eliminated) {
@@ -414,6 +460,13 @@ public class Server extends JFrame {
                                 output.flush();
                                 continue;
                             }
+
+                            if (!characterName.equals(players.get(currentTurnIndex).characterName)) {
+                                output.writeObject("ERROR Not your turn.");
+                                output.flush();
+                                continue;
+                            }
+
 
                             String[] parts = clientCommand.split(" ");
                             if (parts.length < 4) {
@@ -433,6 +486,7 @@ public class Server extends JFrame {
                                 output.flush();
 
                                 broadcast(characterName + " has made a CORRECT accusation and won the game!");
+                                broadcast("GAME_OVER " + characterName);
                                 System.out.println(characterName + " WON the game!");
                                 // You could optionally shut down the server or mark the game as over here
                             } else {
@@ -444,7 +498,12 @@ public class Server extends JFrame {
                                 System.out.println(characterName + " has been eliminated.");
                                 // Optional: disable further actions from this player
 
-                                broadcastPlayerPositions(); // ✅ Optional: useful to reflect position if needed
+                                broadcastPlayerPositions(); // Optional: useful to reflect position if needed
+                                checkForVictory();
+
+                                nextTurn();
+
+
                             }
 
                             continue; // skip to next command
@@ -536,6 +595,11 @@ public class Server extends JFrame {
 
     }
 
+    /**
+     * Broadcasts a text message to all connected players.
+     *
+     * @param message the message to send to every client
+     */
     private void broadcast(String message) {
         for (Player player : players) {
             try {
@@ -547,6 +611,9 @@ public class Server extends JFrame {
         }
     }
 
+    /**
+     * Sends all players the latest player positions on the board.
+     */
     private void broadcastPlayerPositions() {
         List<PlayerState> allPlayers = gameBoard.getAllPlayers();
         for (Player p : players) {
@@ -563,6 +630,144 @@ public class Server extends JFrame {
             }
         }
     }
+
+    /**
+     * Deals Clue-Less cards (characters, weapons, rooms) randomly to all players,
+     * excluding the solution cards.
+     */
+    private void dealCardsToPlayers() {
+        List<String> deck = new ArrayList<>();
+
+        // Add all possible cards
+        deck.addAll(Arrays.asList(
+                "MissScarlet", "ColonelMustard", "MrsWhite",
+                "MrGreen", "MrsPeacock", "ProfessorPlum"
+        ));
+        deck.addAll(Arrays.asList(
+                "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
+        ));
+        deck.addAll(Arrays.asList(
+                "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+                "Conservatory", "Ballroom", "Kitchen"
+        ));
+
+        // Remove the solution cards
+        deck.remove(gameBoard.getSolutionCharacter());
+        deck.remove(gameBoard.getSolutionWeapon());
+        deck.remove(gameBoard.getSolutionRoom());
+
+        // Shuffle the deck
+        Collections.shuffle(deck);
+
+        // Deal cards round-robin
+        int playerIndex = 0;
+        for (String card : deck) {
+            Player player = players.get(playerIndex);
+            PlayerState playerState = gameBoard.getPlayerState(player.characterName);
+            if (playerState != null) {
+                playerState.addCard(card);
+            }
+            playerIndex = (playerIndex + 1) % players.size();
+        }
+
+        // OPTIONAL: notify each player of their cards
+        for (Player p : players) {
+            try {
+                PlayerState ps = gameBoard.getPlayerState(p.characterName);
+                if (ps != null) {
+                    p.output.writeObject("YOUR_CARDS " + ps.getCards());
+                    p.output.flush();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        gameStarted = true;
+        notifyCurrentTurnPlayer();
+
+    }
+
+    /**
+     * Notifies the current player that it is their turn.
+     */
+    private void notifyCurrentTurnPlayer() {
+        if (players.isEmpty()) return;
+        Player currentPlayer = players.get(currentTurnIndex);
+        try {
+            currentPlayer.output.writeObject("YOUR_TURN");
+            currentPlayer.output.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Advances the turn to the next eligible (non-eliminated) player.
+     */
+    private void nextTurn() {
+        //It keeps incrementing currentTurnIndex until it finds a player who is NOT eliminated.
+        //It stops if it loops all the way around (to avoid infinite loops if everyone is eliminated).
+        if (players.isEmpty()) return;
+
+        int startingIndex = currentTurnIndex;
+        do {
+            currentTurnIndex = (currentTurnIndex + 1) % players.size();
+        } while (players.get(currentTurnIndex).eliminated && currentTurnIndex != startingIndex);
+
+        notifyCurrentTurnPlayer();
+    }
+
+
+    /**
+     * Checks if a victory condition has been met (only one player left).
+     * If so, announces the winner and ends the game.
+     */
+    private void checkForVictory() {
+
+        if (players.isEmpty()) return;
+
+        List<Player> activePlayers = new ArrayList<>();
+        for (Player p : players) {
+            if (!p.eliminated) {
+                activePlayers.add(p);
+            }
+        }
+
+        if (activePlayers.size() == 1) {
+            Player winner = activePlayers.get(0);
+            try {
+                winner.output.writeObject("You WON! Everyone else has been eliminated.");
+                winner.output.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            broadcast(winner.characterName + " has WON the game because all other players were eliminated!");
+            broadcast("GAME_OVER " + winner.characterName);
+            System.out.println(winner.characterName + " has WON by default!");
+
+        }
+    }
+
+
+    /**
+     * Finds and returns a Player object by their character name.
+     *
+     * @param name the character name
+     * @return the Player object, or null if not found
+     */
+    private Player findPlayerByName(String name) {
+        for (Player p : players) {
+            if (p.characterName.equals(name)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+
+
+
 
 
 
