@@ -867,6 +867,14 @@ public class Client extends JFrame {
                     application.setVisible(true);
                 }
 
+                if (message.contains("suggests:")) {
+                    JOptionPane.showMessageDialog(this,
+                            message,
+                            "New Suggestion Made",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+
+
                 if (message.startsWith("You WON!")) {
                     JOptionPane.showMessageDialog(this, message, "🎉 You Won the Game!", JOptionPane.INFORMATION_MESSAGE);
 
