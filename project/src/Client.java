@@ -15,6 +15,7 @@ import java.util.*;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.Point;
 import java.util.List;
 
@@ -49,6 +50,7 @@ public class Client extends JFrame {
     private int currentPlayerCol = -1;
     private String myCards = "";
     private final java.util.List<String> detectiveNotes = new ArrayList<>();
+    private final Map<String, Map<String, Boolean>> detectiveTable = new HashMap<>();
 
 
 
@@ -412,73 +414,247 @@ public class Client extends JFrame {
             }
         });
 
+        // TODO Delete
+//        detectiveNotePad.addActionListener(e -> {
+//            if (detectiveNotes.isEmpty() && myCards.isEmpty()) {
+//                JOptionPane.showMessageDialog(this, "You have no notes yet!", "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
+//            } else {
+//                List<String> suspects = new ArrayList<>();
+//                List<String> weapons = new ArrayList<>();
+//                List<String> rooms = new ArrayList<>();
+//                List<String> myOwnCards = new ArrayList<>();
+//
+//                // Parse detective notes (cards shown by other players)
+//                for (String note : detectiveNotes) {
+//                    String[] parts = note.split(":");
+//                    if (parts.length != 2) continue;
+//
+//                    String player = parts[0].trim();
+//                    String card = parts[1].trim();
+//
+//                    if (isSuspect(card)) {
+//                        suspects.add(player + " showed: " + card);
+//                    } else if (isWeapon(card)) {
+//                        weapons.add(player + " showed: " + card);
+//                    } else if (isRoom(card)) {
+//                        rooms.add(player + " showed: " + card);
+//                    }
+//                }
+//
+//                // Parse your own cards
+//                if (!myCards.isEmpty()) {
+//                    String[] cards = myCards.replace("[", "").replace("]", "").split(",");
+//                    for (String card : cards) {
+//                        card = card.trim();
+//                        if (isSuspect(card) || isWeapon(card) || isRoom(card)) {
+//                            myOwnCards.add(card);
+//                        }
+//                    }
+//                }
+//
+//                // Build full detective notepad text
+//                StringBuilder notesBuilder = new StringBuilder();
+//
+//                if (!myOwnCards.isEmpty()) {
+//                    notesBuilder.append("📝 My Cards:\n");
+//                    for (String c : myOwnCards) {
+//                        notesBuilder.append("• ").append(c).append("\n");
+//                    }
+//                    notesBuilder.append("\n");
+//                }
+//
+//                notesBuilder.append("🔎 Suspects:\n");
+//                for (String s : suspects) {
+//                    notesBuilder.append("• ").append(s).append("\n");
+//                }
+//                notesBuilder.append("\n🔪 Weapons:\n");
+//                for (String w : weapons) {
+//                    notesBuilder.append("• ").append(w).append("\n");
+//                }
+//                notesBuilder.append("\n🏰 Rooms:\n");
+//                for (String r : rooms) {
+//                    notesBuilder.append("• ").append(r).append("\n");
+//                }
+//
+//                JOptionPane.showMessageDialog(this,
+//                        notesBuilder.toString(),
+//                        "Detective Notepad",
+//                        JOptionPane.INFORMATION_MESSAGE);
+//            }
+//        });
+// TODO Delete
+
+//        detectiveNotePad.addActionListener(e -> {
+//            // Collect list of players who have appeared in detectiveTable
+//            Set<String> playersSet = new HashSet<>();
+//            for (Map<String, Boolean> map : detectiveTable.values()) {
+//                playersSet.addAll(map.keySet());
+//            }
+//            playersSet.add("Me"); // always include Me
+//            List<String> playersList = new ArrayList<>(playersSet);
+//            Collections.sort(playersList); // make it sorted nicely
+//
+//            // Prepare column headers: "Card", then player names
+//            String[] columnNames = new String[playersList.size() + 1];
+//            columnNames[0] = "Card";
+//            for (int i = 0; i < playersList.size(); i++) {
+//                columnNames[i + 1] = playersList.get(i);
+//            }
+//
+//            // Prepare table data
+//            List<String> allCards = Arrays.asList(
+//                    "MissScarlet", "ColonelMustard", "MrsWhite",
+//                    "MrGreen", "MrsPeacock", "ProfessorPlum",
+//                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench",
+//                    "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+//                    "Conservatory", "Ballroom", "Kitchen"
+//            );
+//
+//            Object[][] data = new Object[allCards.size()][playersList.size() + 1];
+//            for (int row = 0; row < allCards.size(); row++) {
+//                String card = allCards.get(row);
+//                data[row][0] = card; // First column = card name
+//                for (int col = 0; col < playersList.size(); col++) {
+//                    String player = playersList.get(col);
+//                    boolean marked = detectiveTable.containsKey(card) &&
+//                            detectiveTable.get(card).getOrDefault(player, false);
+//                    data[row][col + 1] = marked; // checkbox true/false
+//                }
+//            }
+//
+//            // Create the JTable
+//            JTable table = new JTable(new DefaultTableModel(data, columnNames) {
+//                @Override
+//                public Class<?> getColumnClass(int columnIndex) {
+//                    return (columnIndex == 0) ? String.class : Boolean.class;
+//                }
+//                @Override
+//                public boolean isCellEditable(int row, int column) {
+//                    return column != 0; // Only allow editing checkboxes, not card names
+//                }
+//            });
+//
+//            // Table styling (optional to make it pretty)
+//            table.setRowHeight(25);
+//            table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
+//            table.setFont(new Font("SansSerif", Font.PLAIN, 12));
+//
+//            // Put table inside a scrollpane
+//            JScrollPane scrollPane = new JScrollPane(table);
+//
+//            // Show in a nice popup dialog
+//            JDialog dialog = new JDialog(this, "Detective Notepad", true);
+//            dialog.getContentPane().add(scrollPane);
+//            dialog.setSize(600, 400);
+//            dialog.setLocationRelativeTo(this);
+//            dialog.setVisible(true);
+//        });
+// TODO Delete
+
         detectiveNotePad.addActionListener(e -> {
-            if (detectiveNotes.isEmpty() && myCards.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "You have no notes yet!", "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                List<String> suspects = new ArrayList<>();
-                List<String> weapons = new ArrayList<>();
-                List<String> rooms = new ArrayList<>();
-                List<String> myOwnCards = new ArrayList<>();
-
-                // Parse detective notes (cards shown by other players)
-                for (String note : detectiveNotes) {
-                    String[] parts = note.split(":");
-                    if (parts.length != 2) continue;
-
-                    String player = parts[0].trim();
-                    String card = parts[1].trim();
-
-                    if (isSuspect(card)) {
-                        suspects.add(player + " showed: " + card);
-                    } else if (isWeapon(card)) {
-                        weapons.add(player + " showed: " + card);
-                    } else if (isRoom(card)) {
-                        rooms.add(player + " showed: " + card);
-                    }
-                }
-
-                // Parse your own cards
-                if (!myCards.isEmpty()) {
-                    String[] cards = myCards.replace("[", "").replace("]", "").split(",");
-                    for (String card : cards) {
-                        card = card.trim();
-                        if (isSuspect(card) || isWeapon(card) || isRoom(card)) {
-                            myOwnCards.add(card);
-                        }
-                    }
-                }
-
-                // Build full detective notepad text
-                StringBuilder notesBuilder = new StringBuilder();
-
-                if (!myOwnCards.isEmpty()) {
-                    notesBuilder.append("📝 My Cards:\n");
-                    for (String c : myOwnCards) {
-                        notesBuilder.append("• ").append(c).append("\n");
-                    }
-                    notesBuilder.append("\n");
-                }
-
-                notesBuilder.append("🔎 Suspects:\n");
-                for (String s : suspects) {
-                    notesBuilder.append("• ").append(s).append("\n");
-                }
-                notesBuilder.append("\n🔪 Weapons:\n");
-                for (String w : weapons) {
-                    notesBuilder.append("• ").append(w).append("\n");
-                }
-                notesBuilder.append("\n🏰 Rooms:\n");
-                for (String r : rooms) {
-                    notesBuilder.append("• ").append(r).append("\n");
-                }
-
-                JOptionPane.showMessageDialog(this,
-                        notesBuilder.toString(),
-                        "Detective Notepad",
-                        JOptionPane.INFORMATION_MESSAGE);
+            Set<String> playersSet = new HashSet<>();
+            for (Map<String, Boolean> map : detectiveTable.values()) {
+                playersSet.addAll(map.keySet());
             }
+            playersSet.add("Me"); // always include Me
+            List<String> playersList = new ArrayList<>(playersSet);
+            Collections.sort(playersList); // optional: make it ordered nicely
+
+            String[] columnNames = new String[playersList.size() + 1];
+            columnNames[0] = "Card";
+            for (int i = 0; i < playersList.size(); i++) {
+                columnNames[i + 1] = playersList.get(i);
+            }
+
+            List<String> allCards = Arrays.asList(
+                    "MissScarlet", "ColonelMustard", "MrsWhite",
+                    "MrGreen", "MrsPeacock", "ProfessorPlum",
+                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench",
+                    "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+                    "Conservatory", "Ballroom", "Kitchen"
+            );
+
+            Object[][] data = new Object[allCards.size()][playersList.size() + 1];
+            for (int row = 0; row < allCards.size(); row++) {
+                String card = allCards.get(row);
+                data[row][0] = card;
+                for (int col = 0; col < playersList.size(); col++) {
+                    String player = playersList.get(col);
+                    boolean marked = detectiveTable.containsKey(card) &&
+                            detectiveTable.get(card).getOrDefault(player, false);
+                    data[row][col + 1] = marked;
+                }
+            }
+
+            DefaultTableModel model = new DefaultTableModel(data, columnNames) {
+                @Override
+                public Class<?> getColumnClass(int columnIndex) {
+                    return (columnIndex == 0) ? String.class : Boolean.class;
+                }
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return column != 0; // Only allow editing checkboxes, not card names
+                }
+            };
+
+            JDialog dialog = new JDialog(this, "Detective Notepad", true); //
+
+
+            JTable table = new JTable(model);
+            table.setRowHeight(25);
+            table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
+            table.setFont(new Font("SansSerif", Font.PLAIN, 12));
+
+            JScrollPane scrollPane = new JScrollPane(table);
+
+            // Create Save and Close Button
+            JButton saveButton = new JButton("Save and Close");
+            JButton clearButton = new JButton("Clear All");
+
+            clearButton.addActionListener(ev -> {
+                for (int row = 0; row < model.getRowCount(); row++) {
+                    for (int col = 1; col < model.getColumnCount(); col++) {
+                        model.setValueAt(false, row, col); // uncheck every checkbox
+                    }
+                }
+            });
+
+
+            saveButton.addActionListener(ev -> {
+                // 🧠 On Save: Copy data back into detectiveTable
+                for (int row = 0; row < model.getRowCount(); row++) {
+                    String card = (String) model.getValueAt(row, 0);
+                    for (int col = 1; col < model.getColumnCount(); col++) {
+                        String player = columnNames[col];
+                        Boolean isChecked = (Boolean) model.getValueAt(row, col);
+                        detectiveTable.putIfAbsent(card, new HashMap<>());
+                        detectiveTable.get(card).put(player, isChecked != null && isChecked);
+                    }
+                }
+                JOptionPane.showMessageDialog(this, "Detective Notes Saved!", "Saved", JOptionPane.INFORMATION_MESSAGE);
+
+                dialog.dispose(); // Close the window
+            });
+
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.add(scrollPane, BorderLayout.CENTER);
+//            panel.add(saveButton, BorderLayout.SOUTH);
+            // Make a panel that holds both Save and Clear buttons
+            JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            buttonsPanel.add(saveButton);
+            buttonsPanel.add(clearButton);
+
+            panel.add(buttonsPanel, BorderLayout.SOUTH);
+
+
+
+            dialog.getContentPane().add(panel);
+            dialog.setSize(650, 450);
+            dialog.setLocationRelativeTo(this);
+            dialog.setVisible(true);
         });
+
+
 
         URL menuImage = getClass().getResource("menu.png");
         if (menuImage != null) {
@@ -853,33 +1029,87 @@ public class Client extends JFrame {
                 }
 
 
+//                if (message.startsWith("YOUR_CARDS")) {
+//                    String cardsList = message.substring("YOUR_CARDS".length()).trim();
+//                    myCards = cardsList; // Save the cards for later
+//                    JOptionPane.showMessageDialog(this, "Your cards are:\n" + cardsList,
+//                            "Your Cards", JOptionPane.INFORMATION_MESSAGE);
+//                }
                 if (message.startsWith("YOUR_CARDS")) {
                     String cardsList = message.substring("YOUR_CARDS".length()).trim();
                     myCards = cardsList; // Save the cards for later
+
+                    // ✨ NEW: Populate ALL possible cards into detectiveTable
+                    List<String> allCards = Arrays.asList(
+                            "MissScarlet", "ColonelMustard", "MrsWhite",
+                            "MrGreen", "MrsPeacock", "ProfessorPlum",
+                            "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench",
+                            "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+                            "Conservatory", "Ballroom", "Kitchen"
+                    );
+
+                    for (String card : allCards) {
+                        detectiveTable.putIfAbsent(card, new HashMap<>()); // create row for card
+                    }
+
+                    //  Mark "Me" as owning only the cards I actually have
+                    String[] myOwnCards = cardsList.replace("[", "").replace("]", "").split(",");
+                    for (String card : myOwnCards) {
+                        card = card.trim();
+                        if (!card.isEmpty()) {
+                            detectiveTable.get(card).put("Me", true); // ✅ check mark only my cards
+                        }
+                    }
+
                     JOptionPane.showMessageDialog(this, "Your cards are:\n" + cardsList,
                             "Your Cards", JOptionPane.INFORMATION_MESSAGE);
                 }
 
+
+
+//                if (message.contains("showed you:")) {
+//                    // Example message: "MrsWhite showed you: Revolver"
+//                    String[] parts = message.split("showed you:");
+//                    String disapprovingPlayer = parts[0].trim(); // e.g., "MrsWhite"
+//                    String shownCard = parts[1].trim();           // e.g., "Revolver"
+//
+//                    // Create a detective note entry like "MrsWhite: Revolver"
+//                    String detectiveEntry = disapprovingPlayer + ": " + shownCard;
+//
+//                    // Only add it if it’s not already in the detective notes
+//                    if (!detectiveNotes.contains(detectiveEntry)) {
+//                        detectiveNotes.add(detectiveEntry);
+//                    }
+//
+//                    // Show a popup notifying the player
+//                    JOptionPane.showMessageDialog(this,
+//                            disapprovingPlayer + " disproved your suggestion by showing you: " + shownCard,
+//                            "Detective Note Updated",
+//                            JOptionPane.INFORMATION_MESSAGE);
+//                }
+
                 if (message.contains("showed you:")) {
-                    // Example message: "MrsWhite showed you: Revolver"
                     String[] parts = message.split("showed you:");
-                    String disapprovingPlayer = parts[0].trim(); // e.g., "MrsWhite"
-                    String shownCard = parts[1].trim();           // e.g., "Revolver"
+                    String disapprovingPlayer = parts[0].trim();
+                    String shownCard = parts[1].trim();
 
                     // Create a detective note entry like "MrsWhite: Revolver"
                     String detectiveEntry = disapprovingPlayer + ": " + shownCard;
 
-                    // Only add it if it’s not already in the detective notes
                     if (!detectiveNotes.contains(detectiveEntry)) {
                         detectiveNotes.add(detectiveEntry);
                     }
 
-                    // Show a popup notifying the player
+                    //  NEW: Update detectiveTable
+                    detectiveTable.putIfAbsent(shownCard, new HashMap<>()); // just in case
+                    detectiveTable.get(shownCard).put(disapprovingPlayer, true); //  check mark under that player
+
                     JOptionPane.showMessageDialog(this,
                             disapprovingPlayer + " disproved your suggestion by showing you: " + shownCard,
                             "Detective Note Updated",
                             JOptionPane.INFORMATION_MESSAGE);
                 }
+
 
                 if (message.startsWith("DISPROVE_OPTIONS")) {
                     SwingUtilities.invokeLater(() -> {
