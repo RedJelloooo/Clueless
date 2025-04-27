@@ -551,6 +551,97 @@ public class Client extends JFrame {
 //        });
 // TODO Delete
 
+//        detectiveNotePad.addActionListener(e -> {
+//            Set<String> playersSet = new HashSet<>();
+//            for (Map<String, Boolean> map : detectiveTable.values()) {
+//                playersSet.addAll(map.keySet());
+//            }
+//            playersSet.add("Me"); // always include Me
+//            List<String> playersList = new ArrayList<>(playersSet);
+//            Collections.sort(playersList); // optional: make it ordered nicely
+//
+//            String[] columnNames = new String[playersList.size() + 1];
+//            columnNames[0] = "Card";
+//            for (int i = 0; i < playersList.size(); i++) {
+//                columnNames[i + 1] = playersList.get(i);
+//            }
+//
+//            List<String> allCards = Arrays.asList(
+//                    "MissScarlet", "ColonelMustard", "MrsWhite",
+//                    "MrGreen", "MrsPeacock", "ProfessorPlum",
+//                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench",
+//                    "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+//                    "Conservatory", "Ballroom", "Kitchen"
+//            );
+//
+//            Object[][] data = new Object[allCards.size()][playersList.size() + 1];
+//            for (int row = 0; row < allCards.size(); row++) {
+//                String card = allCards.get(row);
+//                data[row][0] = card;
+//                for (int col = 0; col < playersList.size(); col++) {
+//                    String player = playersList.get(col);
+//                    boolean marked = detectiveTable.containsKey(card) &&
+//                            detectiveTable.get(card).getOrDefault(player, false);
+//                    data[row][col + 1] = marked;
+//                }
+//            }
+//
+//            DefaultTableModel model = new DefaultTableModel(data, columnNames) {
+//                @Override
+//                public Class<?> getColumnClass(int columnIndex) {
+//                    return (columnIndex == 0) ? String.class : Boolean.class;
+//                }
+//                @Override
+//                public boolean isCellEditable(int row, int column) {
+//                    return column != 0; // Only allow editing checkboxes, not card names
+//                }
+//            };
+//
+//            JDialog dialog = new JDialog(this, "Detective Notepad", true); //
+//
+//
+//            JTable table = new JTable(model);
+//            table.setRowHeight(25);
+//            table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
+//            table.setFont(new Font("SansSerif", Font.PLAIN, 12));
+//
+//            JScrollPane scrollPane = new JScrollPane(table);
+//
+//            // Create Save and Close Button
+//            JButton saveButton = new JButton("Save and Close");
+//
+//
+//
+//            saveButton.addActionListener(ev -> {
+//                // 🧠 On Save: Copy data back into detectiveTable
+//                for (int row = 0; row < model.getRowCount(); row++) {
+//                    String card = (String) model.getValueAt(row, 0);
+//                    for (int col = 1; col < model.getColumnCount(); col++) {
+//                        String player = columnNames[col];
+//                        Boolean isChecked = (Boolean) model.getValueAt(row, col);
+//                        detectiveTable.putIfAbsent(card, new HashMap<>());
+//                        detectiveTable.get(card).put(player, isChecked != null && isChecked);
+//                    }
+//                }
+//                JOptionPane.showMessageDialog(this, "Detective Notes Saved!", "Saved", JOptionPane.INFORMATION_MESSAGE);
+//
+//                dialog.dispose(); // Close the window
+//            });
+//
+//            JPanel panel = new JPanel(new BorderLayout());
+//            panel.add(scrollPane, BorderLayout.CENTER);
+//            panel.add(saveButton, BorderLayout.SOUTH);
+//
+//
+//
+//            dialog.getContentPane().add(panel);
+//            dialog.setSize(650, 450);
+//            dialog.setLocationRelativeTo(this);
+//            dialog.setVisible(true);
+//        });
+
+        // TODO Delete
+
         detectiveNotePad.addActionListener(e -> {
             Set<String> playersSet = new HashSet<>();
             for (Map<String, Boolean> map : detectiveTable.values()) {
@@ -558,7 +649,7 @@ public class Client extends JFrame {
             }
             playersSet.add("Me"); // always include Me
             List<String> playersList = new ArrayList<>(playersSet);
-            Collections.sort(playersList); // optional: make it ordered nicely
+            Collections.sort(playersList);
 
             String[] columnNames = new String[playersList.size() + 1];
             columnNames[0] = "Card";
@@ -582,63 +673,73 @@ public class Client extends JFrame {
                     String player = playersList.get(col);
                     boolean marked = detectiveTable.containsKey(card) &&
                             detectiveTable.get(card).getOrDefault(player, false);
-                    data[row][col + 1] = marked;
+                    data[row][col + 1] = marked ? "✔" : ""; // Default to checkmark if true, blank otherwise
                 }
             }
 
             DefaultTableModel model = new DefaultTableModel(data, columnNames) {
                 @Override
-                public Class<?> getColumnClass(int columnIndex) {
-                    return (columnIndex == 0) ? String.class : Boolean.class;
-                }
-                @Override
                 public boolean isCellEditable(int row, int column) {
-                    return column != 0; // Only allow editing checkboxes, not card names
+                    return column != 0; // Only players' columns are editable
                 }
             };
-
-            JDialog dialog = new JDialog(this, "Detective Notepad", true); //
-
 
             JTable table = new JTable(model);
             table.setRowHeight(25);
             table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
             table.setFont(new Font("SansSerif", Font.PLAIN, 12));
 
+            // 🔵 NEW: Add mouse click listener to cycle through ✔ -> ✖ -> ◯ -> ""
+            table.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    int row = table.rowAtPoint(evt.getPoint());
+                    int col = table.columnAtPoint(evt.getPoint());
+                    if (col > 0) { // prevent editing card names
+                        String current = (String) model.getValueAt(row, col);
+                        String next;
+                        if (current == null || current.isEmpty()) {
+                            next = "✔";
+                        } else if (current.equals("✔")) {
+                            next = "✖";
+                        } else if (current.equals("✖")) {
+                            next = "◯";
+                        } else {
+                            next = ""; // go back to blank
+                        }
+                        model.setValueAt(next, row, col);
+                    }
+                }
+            });
+
             JScrollPane scrollPane = new JScrollPane(table);
 
-            // Create Save and Close Button
             JButton saveButton = new JButton("Save and Close");
-
-
-
             saveButton.addActionListener(ev -> {
-                // 🧠 On Save: Copy data back into detectiveTable
                 for (int row = 0; row < model.getRowCount(); row++) {
                     String card = (String) model.getValueAt(row, 0);
                     for (int col = 1; col < model.getColumnCount(); col++) {
                         String player = columnNames[col];
-                        Boolean isChecked = (Boolean) model.getValueAt(row, col);
+                        String mark = (String) model.getValueAt(row, col);
+
                         detectiveTable.putIfAbsent(card, new HashMap<>());
-                        detectiveTable.get(card).put(player, isChecked != null && isChecked);
+                        detectiveTable.get(card).put(player, "✔".equals(mark)); // Only ✔ counts as true internally
                     }
                 }
-                JOptionPane.showMessageDialog(this, "Detective Notes Saved!", "Saved", JOptionPane.INFORMATION_MESSAGE);
-
-                dialog.dispose(); // Close the window
+                JOptionPane.showMessageDialog(Client.this, "Detective Notes Saved!", "Saved", JOptionPane.INFORMATION_MESSAGE);
             });
 
+            JDialog dialog = new JDialog(Client.this, "Detective Notepad", true);
             JPanel panel = new JPanel(new BorderLayout());
             panel.add(scrollPane, BorderLayout.CENTER);
             panel.add(saveButton, BorderLayout.SOUTH);
 
-
-
             dialog.getContentPane().add(panel);
             dialog.setSize(650, 450);
-            dialog.setLocationRelativeTo(this);
+            dialog.setLocationRelativeTo(Client.this);
             dialog.setVisible(true);
         });
+
 
 
 
