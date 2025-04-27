@@ -1,6 +1,17 @@
 import java.util.*;
 import java.awt.Point;
 
+/**
+ * The GameBoard class models the game environment for the Clue-Less game.
+ * It manages the 5x5 grid of rooms and hallways, tracks player positions,
+ * handles player movement, manages secret passages, and verifies suggestions and accusations.
+ *
+ * It also randomly selects a hidden solution (character, weapon, and room) at game initialization.
+ *
+ *  * Authors:
+ *  *  - Albert Rojas
+ */
+
 public class GameBoard {
 
     public static final int SIZE = 5;
@@ -13,6 +24,9 @@ public class GameBoard {
     private final String solutionWeapon;
     private final String solutionRoom;
 
+    /**
+     * Constructs a GameBoard, initializes rooms, hallways, and picks a random solution.
+     */
     public GameBoard() {
         this.rooms = new Room[SIZE][SIZE];
         this.hallways = new HashSet<>();
@@ -35,7 +49,9 @@ public class GameBoard {
     }
 
 
-
+    /**
+     * Initializes the 5x5 board with rooms and hallways according to the Clue-Less layout.
+     */
     private void initializeRooms() {
         String[][] names = {
                 {"Study", "H", "Hall", "H", "Lounge"},
@@ -59,7 +75,9 @@ public class GameBoard {
         }
     }
 
-
+    /**
+     * Initializes the set of valid hallway connections between rooms.
+     */
     private void initializeHallways() {
         for (int row = 0; row < SIZE; row++) {
             for (int col = 0; col < SIZE; col++) {
@@ -78,6 +96,16 @@ public class GameBoard {
             }
         }
     }
+
+    /**
+     * Adds a player to the game board at a specified starting location.
+     *
+     * @param playerId the unique ID or character name of the player
+     * @param characterName the character assigned to the player
+     * @param row the starting row position
+     * @param col the starting column position
+     * @return true if the player was successfully added, false otherwise
+     */
     public boolean addPlayer(String playerId, String characterName, int row, int col) {
         Room room = getRoom(row, col);
         if (room == null) return false;
@@ -95,6 +123,15 @@ public class GameBoard {
         return true;
     }
 
+    /**
+     * Attempts to move a player to a specified target location.
+     * Validates that the move is legal according to hallway connections.
+     *
+     * @param playerId the player's ID
+     * @param targetRow the row to move to
+     * @param targetCol the column to move to
+     * @return true if the move was successful, false if invalid
+     */
     public boolean movePlayer(String playerId, int targetRow, int targetCol) {
         PlayerState player = playerPositions.get(playerId);
         if (player == null) {
@@ -137,20 +174,40 @@ public class GameBoard {
         return true;
     }
 
-
+    /**
+     * Returns the Room object where the specified player currently is.
+     *
+     * @param playerId the player's ID
+     * @return the current Room the player is located in
+     */
     public Room getRoom(String playerId) {
         PlayerState player = playerPositions.get(playerId);
         return rooms[player.getRow()][player.getCol()];
     }
+
+    /**
+     * Retrieves the current state information for the specified player.
+     *
+     * @param playerId the player's ID
+     * @return the PlayerState associated with the player
+     */
     public PlayerState getPlayerState(String playerId) {
         return playerPositions.get(playerId);
     }
 
-
+    /**
+     * Returns a list of all player states currently on the board.
+     *
+     * @return a List of PlayerState objects
+     */
     public List<PlayerState> getAllPlayers() {
         return new ArrayList<>(playerPositions.values());
     }
 
+    /**
+     * Prints a debug view of the board showing player locations.
+     * Used mainly for server-side console output.
+     */
     public void printBoardDebug() {
         for (int r = 0; r < SIZE; r++) {
             for (int c = 0; c < SIZE; c++) {
@@ -184,7 +241,13 @@ public class GameBoard {
         }
     }
 
-
+    /**
+     * Determines if a player can legally move in a specified cardinal direction.
+     *
+     * @param playerId the player's ID
+     * @param direction one of "UP", "DOWN", "LEFT", or "RIGHT"
+     * @return true if the move is allowed, false otherwise
+     */
     public boolean canMove(String playerId, String direction) {
         PlayerState player = playerPositions.get(playerId);
         if (player == null) return false;
@@ -232,16 +295,40 @@ public class GameBoard {
 
         return true;
     }
+
+    /**
+     * Randomly selects an item from an array.
+     *
+     * @param array an array of strings to choose from
+     * @return a randomly selected string
+     */
     private String pickRandom(String[] array) {
         return array[new Random().nextInt(array.length)];
     }
 
+
+    /**
+     * Verifies whether an accusation matches the game's hidden solution.
+     *
+     * @param character the accused character
+     * @param weapon the accused weapon
+     * @param room the accused room
+     * @return true if the accusation is correct, false otherwise
+     */
     public boolean isCorrectAccusation(String character, String weapon, String room) {
         return solutionCharacter.equals(character) &&
                 solutionWeapon.equals(weapon) &&
                 solutionRoom.equals(room);
     }
 
+
+    /**
+     * Retrieves the destination room for a secret passage if one exists.
+     *
+     * @param row the current row of the player
+     * @param col the current column of the player
+     * @return a Point indicating the destination row and column, or null if no passage
+     */
     public Point getSecretPassageDestination(int row, int col) {
         if (rooms[row][col] == null) return null;
         String roomName = rooms[row][col].getName();
@@ -255,14 +342,39 @@ public class GameBoard {
         };
     }
 
+    /**
+     * Retrieves the Room object at a given grid position.
+     *
+     * @param row the row index
+     * @param col the column index
+     * @return the Room at the specified location, or null if invalid
+     */
     public Room getRoom(int row, int col) {
         if (row >= 0 && row < SIZE && col >= 0 && col < SIZE) {
             return rooms[row][col];
         }
         return null;
     }
+
+    /**
+     * Returns the solution character selected at the start of the game.
+     *
+     * @return the solution character's name
+     */
     public String getSolutionCharacter() { return solutionCharacter; }
+
+    /**
+     * Returns the solution weapon selected at the start of the game.
+     *
+     * @return the solution weapon's name
+     */
     public String getSolutionWeapon() { return solutionWeapon; }
+
+    /**
+     * Returns the solution room selected at the start of the game.
+     *
+     * @return the solution room's name
+     */
     public String getSolutionRoom() { return solutionRoom; }
 
 

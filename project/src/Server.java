@@ -17,10 +17,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * Server class creates a server for players to connect to
- * the players are each a thread with their own score and round number
- * The server also calculates the score for the players and
- * generally ties everything together
+ * The Server class manages the Clue-Less game server.
+ *
+ * It accepts client connections, handles player actions (joining, moving, suggesting, accusing),
+ * manages the game board state, deals cards, enforces turns, and broadcasts updates to all clients.
+ *
+ * Each connected player runs on a separate thread for simultaneous gameplay.
  */
 public class Server extends JFrame {
 
@@ -50,9 +52,8 @@ public class Server extends JFrame {
 
 
     /**
-     * creates a GUI interface for the server side.
-     * also creates an array BlockingQueue to store the
-     * various threads for the players.
+     * Creates the Server GUI and initializes server resources,
+     * including the game board, scramble data, and thread pool for players.
      */
     public Server() {
         super("Server"); // title of the GUI
@@ -69,8 +70,7 @@ public class Server extends JFrame {
     }
 
     /**
-     * Will run the server by creating a new socket and then attempt
-     * to accept connections from clients
+     * Starts the server, listening for incoming player connections on the designated port.
      */
     public void runServer() {
         try {
@@ -90,9 +90,9 @@ public class Server extends JFrame {
     }
 
     /**
-     * This method gets connection from clients that are attempting to join the server.
-     * This also adds a new thread to the blocking queue for the new player.
-     * @throws IOException - if adding another player fails
+     * Continuously accepts new player connections and starts a thread for each new player.
+     *
+     * @throws IOException if an error occurs while accepting connections
      */
     private void getConnections() throws IOException {
         while (true) {
@@ -111,16 +111,18 @@ public class Server extends JFrame {
     }
 
     /**
-     * displays a message from the client
-     * @param message - message to display
+     * Displays a message in the server GUI text area.
+     *
+     * @param message the message to display
      */
     private void displayMessage(final String message) {
         SwingUtilities.invokeLater(() -> displayArea.append(message));
     }
 
     /**
-     * closes the server
-     * @throws IOException - if there is an error closing the server
+     * Closes the server socket, releasing network resources.
+     *
+     * @throws IOException if an error occurs while closing the server
      */
     private void closeServer() throws IOException {
         try {
@@ -452,11 +454,6 @@ public class Server extends JFrame {
 
                         }
 
-
-
-
-
-
                         if (clientCommand.startsWith("ACCUSE")) {
                             if (eliminated) {
                                 output.writeObject("ERROR You are eliminated and cannot make accusations.");
@@ -598,6 +595,11 @@ public class Server extends JFrame {
 
     }
 
+    /**
+     * Broadcasts a text message to all connected players.
+     *
+     * @param message the message to send to every client
+     */
     private void broadcast(String message) {
         for (Player player : players) {
             try {
@@ -609,6 +611,9 @@ public class Server extends JFrame {
         }
     }
 
+    /**
+     * Sends all players the latest player positions on the board.
+     */
     private void broadcastPlayerPositions() {
         List<PlayerState> allPlayers = gameBoard.getAllPlayers();
         for (Player p : players) {
@@ -626,6 +631,10 @@ public class Server extends JFrame {
         }
     }
 
+    /**
+     * Deals Clue-Less cards (characters, weapons, rooms) randomly to all players,
+     * excluding the solution cards.
+     */
     private void dealCardsToPlayers() {
         List<String> deck = new ArrayList<>();
 
@@ -678,6 +687,9 @@ public class Server extends JFrame {
 
     }
 
+    /**
+     * Notifies the current player that it is their turn.
+     */
     private void notifyCurrentTurnPlayer() {
         if (players.isEmpty()) return;
         Player currentPlayer = players.get(currentTurnIndex);
@@ -688,6 +700,10 @@ public class Server extends JFrame {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Advances the turn to the next eligible (non-eliminated) player.
+     */
     private void nextTurn() {
         //It keeps incrementing currentTurnIndex until it finds a player who is NOT eliminated.
         //It stops if it loops all the way around (to avoid infinite loops if everyone is eliminated).
@@ -701,14 +717,13 @@ public class Server extends JFrame {
         notifyCurrentTurnPlayer();
     }
 
+
+    /**
+     * Checks if a victory condition has been met (only one player left).
+     * If so, announces the winner and ends the game.
+     */
     private void checkForVictory() {
-        //Counts how many players are still active (not eliminated).
-        //
-        //If there's only one player left, they win automatically.
-        //
-        //It sends a "You WON!" message to the winner.
-        //
-        //It broadcasts to all players announcing who won.
+
         if (players.isEmpty()) return;
 
         List<Player> activePlayers = new ArrayList<>();
@@ -734,6 +749,13 @@ public class Server extends JFrame {
         }
     }
 
+
+    /**
+     * Finds and returns a Player object by their character name.
+     *
+     * @param name the character name
+     * @return the Player object, or null if not found
+     */
     private Player findPlayerByName(String name) {
         for (Player p : players) {
             if (p.characterName.equals(name)) {
