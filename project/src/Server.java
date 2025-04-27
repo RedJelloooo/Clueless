@@ -181,7 +181,7 @@ public class Server extends JFrame {
                             if (start == null) {
                                 output.writeObject("FAILED JOIN: Unknown character");
                                 output.flush();
-                                broadcastPlayerPositions(); // TODO maybe delete if errors start occurring
+                                broadcastPlayerPositions();
 
                                 continue;
                             }
@@ -269,16 +269,6 @@ public class Server extends JFrame {
                                         }
                                     }
 
-//                                    if (moved) {
-//                                        broadcastPlayerPositions();
-//                                        nextTurn();
-//                                    }
-//                                    currentTurnIndex = (currentTurnIndex + 1) % players.size();
-//                                    notifyCurrentTurnPlayer();
-
-
-
-
                                 } else {
                                     output.writeObject("MOVED false (Illegal move in direction: " + direction + ")");
                                 }
@@ -345,7 +335,6 @@ public class Server extends JFrame {
                                     int oldRow = suspectPlayer.getRow();
                                     int oldCol = suspectPlayer.getCol();
 
-//                                    Room oldRoom = gameBoard.getRoom(suspect); // TODO delete after verifying
                                     Room oldRoom = gameBoard.getRoom(oldRow, oldCol);
                                     if (oldRoom != null) oldRoom.removeOccupant(suspect);
 
@@ -390,12 +379,6 @@ public class Server extends JFrame {
 
 
                                 }
-//                                else {
-//                                    output.writeObject("PROMPT_ACCUSATION_OR_END");
-//                                    output.flush();
-//                                } // TODO this might be wrong fix in the FUTURE
-
-//                                // TODO: In future - notify other players to disprove
 
 
                             } catch (Exception ex) {
@@ -452,20 +435,6 @@ public class Server extends JFrame {
                             nextTurn();
                         }
 
-
-//                        if (clientCommand.startsWith("DISPROVE_SELECTED")) {
-//                            String cardShown = clientCommand.split(" ", 2)[1];
-//
-//                            broadcast(characterName + " disproved the suggestion by showing a card.");
-//
-//                            Player suggester = findPlayerByName(lastSuggester);
-//                            if (suggester != null) {
-//                                suggester.output.writeObject(characterName + " showed you: " + cardShown);
-//                                suggester.output.flush();
-//                            }
-//
-//                            nextTurn(); // Move to next player
-//                        }
                         if (clientCommand.startsWith("DISPROVE_SELECTED")) {
                             String cardShown = clientCommand.split(" ", 2)[1];
 
@@ -481,7 +450,6 @@ public class Server extends JFrame {
                                 suggester.output.flush();
                             }
 
-                            // Do NOT nextTurn() yet - wait for suggester to either accuse or end turn!
                         }
 
 
@@ -534,11 +502,9 @@ public class Server extends JFrame {
 
                                 broadcastPlayerPositions(); // Optional: useful to reflect position if needed
                                 checkForVictory();
-                                //TODO (but only if the game isn't over — if you add game-over logic later.)
-//                                currentTurnIndex = (currentTurnIndex + 1) % players.size();
-//                                notifyCurrentTurnPlayer();
+
                                 nextTurn();
-                                //TODO (but only if the game isn't over — if you add game-over logic later.)
+
 
                             }
 

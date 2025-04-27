@@ -367,32 +367,6 @@ public class Client extends JFrame {
         });
 
 
-//        makeSuggestionButton.addActionListener(e -> {
-//            String[] suspects = {
-//                    "MissScarlet", "ColonelMustard", "MrsWhite",
-//                    "MrGreen", "MrsPeacock", "ProfessorPlum"
-//            };
-//
-//            String[] weapons = {
-//                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
-//            };
-//
-//            JComboBox<String> suspectDropdown = new JComboBox<>(suspects);
-//            JComboBox<String> weaponDropdown = new JComboBox<>(weapons);
-//            JPanel panel = new JPanel(new GridLayout(2, 2));
-//            panel.add(new JLabel("Suspect:"));
-//            panel.add(suspectDropdown);
-//            panel.add(new JLabel("Weapon:"));
-//            panel.add(weaponDropdown);
-//
-//            int result = JOptionPane.showConfirmDialog(this, panel, "Make a Suggestion", JOptionPane.OK_CANCEL_OPTION);
-//            if (result == JOptionPane.OK_OPTION) {
-//                String suspect = (String) suspectDropdown.getSelectedItem();
-//                String weapon = (String) weaponDropdown.getSelectedItem();
-//                sendData("SUGGEST " + suspect + " " + weapon);
-//            }
-//        });
-
         makeAccusationButton.addActionListener(e -> {
             String[] suspects = {
                     "MissScarlet", "ColonelMustard", "MrsWhite",
@@ -438,66 +412,6 @@ public class Client extends JFrame {
             }
         });
 
-//        detectiveNotePad.addActionListener(e -> {
-//            if (detectiveNotes.isEmpty()) {
-//                JOptionPane.showMessageDialog(this, "You have no notes yet!", "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
-//            } else {
-//                StringBuilder notesBuilder = new StringBuilder();
-//                for (String note : detectiveNotes) {
-//                    notesBuilder.append(note).append("\n");
-//                }
-//                JOptionPane.showMessageDialog(this, "Detective Notes:\n" + notesBuilder.toString(),
-//                        "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
-//            }
-//        });
-//        detectiveNotePad.addActionListener(e -> {
-//            if (detectiveNotes.isEmpty()) {
-//                JOptionPane.showMessageDialog(this, "You have no notes yet!", "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
-//            } else {
-//                // Create lists to organize
-//                List<String> suspects = new ArrayList<>();
-//                List<String> weapons = new ArrayList<>();
-//                List<String> rooms = new ArrayList<>();
-//
-//                for (String note : detectiveNotes) {
-//                    // Split into who showed what
-//                    String[] parts = note.split(":");
-//                    if (parts.length != 2) continue; // skip bad formats
-//
-//                    String player = parts[0].trim();
-//                    String card = parts[1].trim();
-//
-//                    // Classify based on card name
-//                    if (isSuspect(card)) {
-//                        suspects.add(player + " showed: " + card);
-//                    } else if (isWeapon(card)) {
-//                        weapons.add(player + " showed: " + card);
-//                    } else if (isRoom(card)) {
-//                        rooms.add(player + " showed: " + card);
-//                    }
-//                }
-//
-//                // Build the full detective notebook text
-//                StringBuilder notesBuilder = new StringBuilder();
-//                notesBuilder.append("🔎 Suspects:\n");
-//                for (String s : suspects) {
-//                    notesBuilder.append("• ").append(s).append("\n");
-//                }
-//                notesBuilder.append("\n🔪 Weapons:\n");
-//                for (String w : weapons) {
-//                    notesBuilder.append("• ").append(w).append("\n");
-//                }
-//                notesBuilder.append("\n🏰 Rooms:\n");
-//                for (String r : rooms) {
-//                    notesBuilder.append("• ").append(r).append("\n");
-//                }
-//
-//                JOptionPane.showMessageDialog(this,
-//                        notesBuilder.toString(),
-//                        "Detective Notepad",
-//                        JOptionPane.INFORMATION_MESSAGE);
-//            }
-//        });
         detectiveNotePad.addActionListener(e -> {
             if (detectiveNotes.isEmpty() && myCards.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "You have no notes yet!", "Detective Notepad", JOptionPane.INFORMATION_MESSAGE);
@@ -565,10 +479,6 @@ public class Client extends JFrame {
                         JOptionPane.INFORMATION_MESSAGE);
             }
         });
-
-
-
-
 
         URL menuImage = getClass().getResource("menu.png");
         if (menuImage != null) {
@@ -795,10 +705,6 @@ public class Client extends JFrame {
                     application.setVisible(true);
                 }
 
-//                if (message.startsWith("You WON!") || message.startsWith("Your accusation was incorrect")) {
-//                    JOptionPane.showMessageDialog(this, message, "Accusation Result", JOptionPane.INFORMATION_MESSAGE);
-//                }
-
                 if (message.startsWith("You WON!")) {
                     JOptionPane.showMessageDialog(this, message, "🎉 You Won the Game!", JOptionPane.INFORMATION_MESSAGE);
 
@@ -853,12 +759,6 @@ public class Client extends JFrame {
                     Toolkit.getDefaultToolkit().beep();
                 }
 
-
-//                if (message.equals("PROMPT_SUGGESTION")) {
-//                    SwingUtilities.invokeLater(() -> {
-//                        makeSuggestionButton.doClick();
-//                    });
-//                }
                 if (message.equals("PROMPT_SUGGESTION")) {
                     SwingUtilities.invokeLater(() -> {
                         detectiveNotePad.doClick(); // <-- open Detective Notepad automatically
@@ -960,21 +860,6 @@ public class Client extends JFrame {
                             "Your Cards", JOptionPane.INFORMATION_MESSAGE);
                 }
 
-
-//                if (message.contains("showed you:")) {
-//                    String shownCard = message.substring(message.indexOf("showed you:") + "showed you:".length()).trim();
-//
-//                    // Add the shown card to the detective notepad (myCards)
-//                    if (!myCards.contains(shownCard)) {
-//                        myCards += "\n" + shownCard;
-//                    }
-//
-//                    // Show popup confirming the new note
-//                    JOptionPane.showMessageDialog(this,
-//                            "New note added to your detective notepad:\n" + shownCard,
-//                            "Detective Note Updated",
-//                            JOptionPane.INFORMATION_MESSAGE);
-//                }
                 if (message.contains("showed you:")) {
                     // Example message: "MrsWhite showed you: Revolver"
                     String[] parts = message.split("showed you:");
@@ -996,24 +881,6 @@ public class Client extends JFrame {
                             JOptionPane.INFORMATION_MESSAGE);
                 }
 
-
-
-
-//                if (message.startsWith("DISPROVE_OPTIONS")) {
-//                    String[] options = message.substring("DISPROVE_OPTIONS".length()).trim().split(",");
-//                    String selectedCard = (String) JOptionPane.showInputDialog(
-//                            this,
-//                            "Choose a card to disprove the suggestion:",
-//                            "Disprove Suggestion",
-//                            JOptionPane.PLAIN_MESSAGE,
-//                            null,
-//                            options,
-//                            options[0]
-//                    );
-//                    if (selectedCard != null) {
-//                        sendData("DISPROVE_SELECTED " + selectedCard);
-//                    }
-//                }
                 if (message.startsWith("DISPROVE_OPTIONS")) {
                     SwingUtilities.invokeLater(() -> {
                         detectiveNotePad.doClick(); // <-- pop open the Detective Notes first
@@ -1033,14 +900,6 @@ public class Client extends JFrame {
                         }
                     });
                 }
-
-
-
-
-
-
-
-
             } catch (ClassNotFoundException classNotFoundException) {
                 classNotFoundException.printStackTrace();
             }
@@ -1412,11 +1271,4 @@ public class Client extends JFrame {
         return Arrays.asList("Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room", "Conservatory", "Ballroom", "Kitchen")
                 .contains(card);
     }
-
-
-
-//TODO Make sure disconnects or eliminations (like bad accusations) correctly skip turns later — we'll handle that after basic turns are working.
-//
-//TODO For now, assume all players are active.
-
 }

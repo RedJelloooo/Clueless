@@ -95,7 +95,6 @@ public class GameBoard {
         return true;
     }
 
-    //TODO for debugging
     public boolean movePlayer(String playerId, int targetRow, int targetCol) {
         PlayerState player = playerPositions.get(playerId);
         if (player == null) {
