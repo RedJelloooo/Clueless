@@ -609,15 +609,7 @@ public class Client extends JFrame {
 
             // Create Save and Close Button
             JButton saveButton = new JButton("Save and Close");
-            JButton clearButton = new JButton("Clear All");
 
-            clearButton.addActionListener(ev -> {
-                for (int row = 0; row < model.getRowCount(); row++) {
-                    for (int col = 1; col < model.getColumnCount(); col++) {
-                        model.setValueAt(false, row, col); // uncheck every checkbox
-                    }
-                }
-            });
 
 
             saveButton.addActionListener(ev -> {
@@ -638,13 +630,7 @@ public class Client extends JFrame {
 
             JPanel panel = new JPanel(new BorderLayout());
             panel.add(scrollPane, BorderLayout.CENTER);
-//            panel.add(saveButton, BorderLayout.SOUTH);
-            // Make a panel that holds both Save and Clear buttons
-            JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-            buttonsPanel.add(saveButton);
-            buttonsPanel.add(clearButton);
-
-            panel.add(buttonsPanel, BorderLayout.SOUTH);
+            panel.add(saveButton, BorderLayout.SOUTH);
 
 
 
