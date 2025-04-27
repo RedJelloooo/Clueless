@@ -11,11 +11,14 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import javax.sound.sampled.*;
 import javax.swing.*;
+import java.awt.Point;
+
 
 /**
  * @author Brandon Cano (Server and Client Logic)
@@ -37,6 +40,17 @@ public class Client extends JFrame {
     private final Set<String> wordsGuessed = new HashSet<>();
     private String message = "";
     private JComboBox<String> characterDropdown;
+    private final Set<Point> secretPassageRooms = Set.of(
+            new Point(0, 0), // Study
+            new Point(0, 4), // Lounge
+            new Point(4, 0), // Conservatory
+            new Point(4, 4)  // Kitchen
+    );
+    private int currentPlayerRow = -1;
+    private int currentPlayerCol = -1;
+
+
+
 
     // GUI components
     private JPanel boardPanel;
@@ -55,7 +69,11 @@ public class Client extends JFrame {
     private final JButton chooseName;
     private final JButton displayRules;
     private JScrollPane scrollPane;
-    private JButton whereAmIButton;
+    private JButton secretPassageButton;
+    private final JButton makeSuggestionButton = new JButton("Make Suggestion");
+    private final JButton makeAccusationButton = new JButton("Make Accusation");
+    private JButton myCardsButton;
+    private JButton detectiveNotePad;
 
 
     private final JLabel scrambleForCurrentRoundLabel;
@@ -69,6 +87,8 @@ public class Client extends JFrame {
     private JLabel gameLogo;
     private JLabel menu;
     private JLabel rules;
+
+
 
     private final JTextField enterName;
 
@@ -129,6 +149,8 @@ public class Client extends JFrame {
         exitTheApplicationButton = new JButton();
         joinTheTournamentButton = new JButton();
         displayLeaderboard = new JButton();
+        myCardsButton = new JButton();
+        detectiveNotePad = new JButton();
         skinsButton = new JButton();
         chooseName = new JButton();
         displayRules = new JButton();
@@ -146,11 +168,6 @@ public class Client extends JFrame {
 
         textField.setEditable(true);
 
-        whereAmIButton = new JButton("Where Am I?");
-        whereAmIButton.setBounds(600, 340, 150, 25);
-        whereAmIButton.setVisible(true);
-        add(whereAmIButton);
-
         JButton upButton = new JButton("Up");
         upButton.setBounds(25, 400, 100, 25);
         add(upButton);
@@ -166,6 +183,18 @@ public class Client extends JFrame {
         JButton rightButton = new JButton("Right");
         rightButton.setBounds(25, 490, 100, 25);
         add(rightButton);
+
+//        JButton secretPassageButton = new JButton("Secret Passage");
+        secretPassageButton = new JButton("Secret Passage");
+        secretPassageButton.setBounds(25, 520, 100, 25);  // adjust position if needed
+        add(secretPassageButton);
+
+        secretPassageButton.addActionListener(e -> {
+            System.out.println("Sending command: SECRET_PASSAGE");
+            sendData("SECRET_PASSAGE");
+        });
+
+
 
         System.out.println("Sending move command: MOVE_DIRECTION UP");
 
@@ -188,41 +217,43 @@ public class Client extends JFrame {
             sendData("MOVE_DIRECTION RIGHT");
         });
 
-        whereAmIButton.addActionListener(e -> {
-            System.out.println("Sending command: WHERE");
-            sendData("WHERE");
-        });
-
-
-
 
         boardLabels = new JLabel[BOARD_SIZE][BOARD_SIZE];
         JPanel boardPanel = new JPanel(new GridLayout(BOARD_SIZE, BOARD_SIZE));
         boardPanel.setBounds(150, 55, 400, 400); // adjust size as needed
 
         String[][] roomGridNames = {
-                {"Study", "", "Hall", "", "Lounge"},
-                {"", "", "", "", ""},
-                {"Library", "", "Billiard", "", "Dining"},
-                {"", "", "", "", ""},
-                {"Conservatory", "", "Ballroom", "", "Kitchen"}
+                {"Study", "H", "Hall", "H", "Lounge"},
+                {"H", "", "H", "", "H"},
+                {"Library", "H", "Billiard", "H", "Dining"},
+                {"H", "", "H", "", "H"},
+                {"Conservatory", "H", "Ballroom", "H", "Kitchen"}
         };
 
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
                 String name = roomGridNames[row][col];
-                JLabel label;
+                JLabel label = new JLabel(); // safe default
 
-                if (name.equals("")) {
-                    label = new JLabel(); // Blank hallway square
-                } else {
-                    label = new JLabel(name, SwingConstants.CENTER);
-                    label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                }
 
                 label.setOpaque(true);
 
-                label.setBackground(name.equals("") ? Color.BLACK : Color.CYAN);
+                if (name.equals("H")) {
+                    label = new JLabel(); // Hallway
+                    label.setOpaque(true);
+                    label.setBackground(Color.LIGHT_GRAY);
+                    label.setToolTipText("Hallway");
+                } else if (name.equals("")) {
+                    label = new JLabel(); // Invalid/unused
+                    label.setOpaque(true);
+                    label.setBackground(Color.BLACK);
+                } else {
+                    label = new JLabel(name, SwingConstants.CENTER); // Room
+                    label.setOpaque(true);
+                    label.setBackground(Color.CYAN);
+                    label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                    label.setToolTipText(name);
+                }
 
 
                 boardLabels[row][col] = label;
@@ -230,9 +261,7 @@ public class Client extends JFrame {
             }
         }
 
-        add(boardPanel);
-
-
+//        add(boardPanel);
 
 
         URL rulesURL = getClass().getResource("rules.png");
@@ -244,8 +273,6 @@ public class Client extends JFrame {
             scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setVisible(false); // hide it by default
-
-
 
         }
 
@@ -282,13 +309,82 @@ public class Client extends JFrame {
         add(characterDropdown);
 
         JButton joinGameButton = new JButton("Join Game");
-        joinGameButton.setBounds(600, 240 + 35, 150, 25);
+        joinGameButton.setBounds(600, 275, 150, 25);
         add(joinGameButton);
+
 
         joinGameButton.addActionListener(e -> {
             String selected = (String) characterDropdown.getSelectedItem();
+            name = selected;
             sendData("JOIN " + selected);
+            add(boardPanel);
         });
+
+
+        makeSuggestionButton.addActionListener(e -> {
+            String[] suspects = {
+                    "MissScarlet", "ColonelMustard", "MrsWhite",
+                    "MrGreen", "MrsPeacock", "ProfessorPlum"
+            };
+
+            String[] weapons = {
+                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
+            };
+
+            JComboBox<String> suspectDropdown = new JComboBox<>(suspects);
+            JComboBox<String> weaponDropdown = new JComboBox<>(weapons);
+            JPanel panel = new JPanel(new GridLayout(2, 2));
+            panel.add(new JLabel("Suspect:"));
+            panel.add(suspectDropdown);
+            panel.add(new JLabel("Weapon:"));
+            panel.add(weaponDropdown);
+
+            int result = JOptionPane.showConfirmDialog(this, panel, "Make a Suggestion", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
+                String suspect = (String) suspectDropdown.getSelectedItem();
+                String weapon = (String) weaponDropdown.getSelectedItem();
+                sendData("SUGGEST " + suspect + " " + weapon);
+            }
+        });
+
+        makeAccusationButton.addActionListener(e -> {
+            String[] suspects = {
+                    "MissScarlet", "ColonelMustard", "MrsWhite",
+                    "MrGreen", "MrsPeacock", "ProfessorPlum"
+            };
+
+            String[] weapons = {
+                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
+            };
+
+            String[] rooms = {
+                    "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+                    "Conservatory", "Ballroom", "Kitchen"
+            };
+
+            JComboBox<String> suspectDropdown = new JComboBox<>(suspects);
+            JComboBox<String> weaponDropdown = new JComboBox<>(weapons);
+            JComboBox<String> roomDropdown = new JComboBox<>(rooms);
+
+            JPanel panel = new JPanel(new GridLayout(3, 2));
+            panel.add(new JLabel("Suspect:"));
+            panel.add(suspectDropdown);
+            panel.add(new JLabel("Weapon:"));
+            panel.add(weaponDropdown);
+            panel.add(new JLabel("Room:"));
+            panel.add(roomDropdown);
+
+            int result = JOptionPane.showConfirmDialog(this, panel, "Make an Accusation", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
+                String suspect = (String) suspectDropdown.getSelectedItem();
+                String weapon = (String) weaponDropdown.getSelectedItem();
+                String room = (String) roomDropdown.getSelectedItem();
+
+                sendData("ACCUSE " + suspect + " " + weapon + " " + room);
+            }
+        });
+
+
 
         URL menuImage = getClass().getResource("menu.png");
         if (menuImage != null) {
@@ -357,8 +453,10 @@ public class Client extends JFrame {
             backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
             backToMainMenuFromSkinsButton.setVisible(false);
             exitTheApplicationButton.setVisible(true);
-            joinTheTournamentButton.setVisible(true);
+            joinTheTournamentButton.setVisible(false);//TODO set false cant delete will break the game
             displayLeaderboard.setVisible(true);
+            myCardsButton.setVisible(true);
+            detectiveNotePad.setVisible(true);
             imagesJComboBox.setVisible(false);
             skinsButton.setVisible(true);
             enterName.setVisible(false);
@@ -397,8 +495,6 @@ public class Client extends JFrame {
             backToMainMenuFromSkinsButton.setBounds(600, 450, 150, 50);
 
         });
-
-
 
         joinTheTournamentButton.addActionListener(e -> {
             if (clientRound >= 5) {
@@ -512,6 +608,11 @@ public class Client extends JFrame {
                     application.setVisible(true);
                 }
 
+                if (message.startsWith("You WON!") || message.startsWith("Your accusation was incorrect")) {
+                    JOptionPane.showMessageDialog(this, message, "Accusation Result", JOptionPane.INFORMATION_MESSAGE);
+                }
+
+
                 //  NEW: Handle custom game messages from Clue-Less server
                 if (message.startsWith("LOCATION")) {
                     // Format: "LOCATION Ballroom [2,2]"
@@ -524,15 +625,51 @@ public class Client extends JFrame {
                     JOptionPane.showMessageDialog(this, message, "Location", JOptionPane.INFORMATION_MESSAGE);
                 }
 
-
-                if (message.startsWith("MOVED")) {
+                if (message.startsWith("MOVED false")) {
                     JOptionPane.showMessageDialog(this, message, "Move Result", JOptionPane.INFORMATION_MESSAGE);
                 }
-
 
                 if (message.startsWith("JOINED") || message.startsWith("FAILED")) {
                     JOptionPane.showMessageDialog(this, message, "Join Result", JOptionPane.INFORMATION_MESSAGE);
                 }
+
+                if (message.startsWith("ERROR")) {
+                    JOptionPane.showMessageDialog(this, message, "Game Error", JOptionPane.ERROR_MESSAGE);
+                }
+
+                if (message.startsWith("ALL_POSITIONS")) {
+                    // First, clear all initials from the board
+                    for (int r = 0; r < BOARD_SIZE; r++) {
+                        for (int c = 0; c < BOARD_SIZE; c++) {
+                            JLabel label = boardLabels[r][c];
+                            if (label != null && label.getText() != null && label.getText().contains("(")) {
+                                String text = label.getText();
+                                if (text.contains("<br>")) {
+                                    // HTML format (room)
+                                    text = text.substring(0, text.indexOf("<br>"));
+                                    label.setText(text);
+                                } else if (text.contains(" (")) {
+                                    // Plain format (hallway)
+                                    label.setText(text.substring(0, text.indexOf(" (")));
+                                }
+                            }
+                        }
+                    }
+
+                    // Then, re-add every player properly
+                    String[] parts = message.split(" ");
+                    for (int i = 1; i < parts.length; i++) {
+                        String[] tokens = parts[i].split(",");
+                        String playerName = tokens[0];
+                        int row = Integer.parseInt(tokens[1]);
+                        int col = Integer.parseInt(tokens[2]);
+                        updateBoard(playerName, row, col);  // ✅ use the correct playerName
+                    }
+                }
+
+
+
+
             } catch (ClassNotFoundException classNotFoundException) {
                 classNotFoundException.printStackTrace();
             }
@@ -667,7 +804,7 @@ public class Client extends JFrame {
         scrambleForCurrentRoundLabel.setVisible(false);
         continueToNextRoundButton.setVisible(false);
         exitTheApplicationButton.setVisible(true);
-        joinTheTournamentButton.setVisible(true);
+        joinTheTournamentButton.setVisible(false); //TODO set to false cant delete will break the game
         gameBackgroundLabel.setVisible(false);
         timeRemainingLabel.setVisible(false);
         displayLeaderboard.setVisible(true);
@@ -683,6 +820,8 @@ public class Client extends JFrame {
         gameLogo.setVisible(false);
         gameLogo.setVisible(false);
         display.setVisible(true);
+        myCardsButton.setVisible(true);
+        detectiveNotePad.setVisible(true);
         if (scrollPane != null) scrollPane.setVisible(false);
     }
 
@@ -691,6 +830,7 @@ public class Client extends JFrame {
      */
     private void addJFrameComponents() {
 //        add(rules);
+        add(makeAccusationButton);
         add(displayRules);
         add(displayLeaderboard);
         add(gameLogo);
@@ -714,6 +854,11 @@ public class Client extends JFrame {
         add(gameBackgroundLabel);
         add(menu);
         add(display);
+        add(makeSuggestionButton);
+        add(myCardsButton);
+        add(detectiveNotePad);
+
+
 
         if (scrollPane != null) {
             add(scrollPane); // must be last to control visibility correctly
@@ -727,26 +872,30 @@ public class Client extends JFrame {
     private void initiateBounds() {
 
 
+
         menu.setBounds(-10, -50, 800, 600); //-10, -50, 800, 600
+        makeSuggestionButton.setBounds(150, 20, 150, 25); //New Suggestion button
+        makeAccusationButton.setBounds(600, 404, 150, 25);//600, 372, 150, 25
         backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
         scrambleForCurrentRoundLabel.setBounds(50, 225, 750, 60);
-        displayRules.setBounds(600,404,150,25); //600,275,150,25
+        displayRules.setBounds(600, 307, 150, 25); //600,275,150,25
         exitFromGameToMainMenuButton.setBounds(600, 435, 150, 25);
         exitTheApplicationButton.setBounds(600, 436, 150, 25); // 600, 435, 150, 25
-        joinTheTournamentButton.setBounds(600, 372, 150, 25);
+//        joinTheTournamentButton.setBounds(600, 372, 150, 25);
         timeRemainingLabel.setBounds(50, 225, 700, 100);
         continueToNextRoundButton.setBounds(600,403,150,25);
         currentRoundLabel.setBounds(70, 310, 150, 50);
         gameBackgroundLabel.setBounds(0, 0, 800, 600);
         gameTimerLabel.setBounds(565, -10, 225, 150);
         imagesJComboBox.setBounds(600, 275, 150, 50);
-        displayLeaderboard.setBounds(600, 404, 150, 25);
+//        displayLeaderboard.setBounds(600, 372, 150, 25);
+        myCardsButton.setBounds(600, 339, 150, 25);
+        detectiveNotePad.setBounds(600, 372, 150, 25);
         clientScoreLabel.setBounds(40, 340, 200, 50);
         enterName.setBounds(600, 275, 150, 50);
         textField.setBounds(250, 350, 400, 50);
-//        skinsButton.setBounds(600, 467, 150, 25);
         currentName.setBounds(600, 350, 150, 50);
-        chooseName.setBounds(600, 307, 150, 25);
+//        chooseName.setBounds(600, 307, 150, 25);
         gameLogo.setBounds(0, -100, 800, 800);
         gameLogo.setBounds(0, -100, 800, 800);
         display.setBounds(0, 0, 800, 600);
@@ -774,8 +923,12 @@ public class Client extends JFrame {
         continueToNextRoundButton.setText("Next Scramble");
         joinTheTournamentButton.setText("Join Tournament");
         displayLeaderboard.setText("Leaderboard");
+        myCardsButton.setText("My Cards");
+        detectiveNotePad.setText("Detective Notepad");
         exitTheApplicationButton.setText("Exit");
         displayRules.setText("Rules");
+        myCardsButton.setText("My Cards");
+        detectiveNotePad.setText("Detective Notepad");
         currentName.setText("Name: " + name);
         currentName.setText("Name: " + name);
         chooseName.setText("Choose Name");
@@ -807,6 +960,7 @@ public class Client extends JFrame {
         }
     }
 
+
     private void hideAllScreens() {
         menu.setVisible(false);
         gameBackgroundLabel.setVisible(false);
@@ -816,27 +970,58 @@ public class Client extends JFrame {
     }
 
     private void updateBoard(String playerName, int row, int col) {
-        // Clear all previous tags
-        for (int r = 0; r < BOARD_SIZE; r++) {
-            for (int c = 0; c < BOARD_SIZE; c++) {
-                JLabel label = boardLabels[r][c];
-                if (label != null && label.getText() != null && label.getText().contains("(")) {
-                    int idx = label.getText().indexOf(" (");
-                    label.setText(label.getText().substring(0, idx));
-                }
-            }
-        }
 
-        // Safely update any tile, including hallways
         JLabel current = boardLabels[row][col];
         if (current == null) return;
 
-        String baseText = current.getText() == null ? "" : current.getText();
-        if (baseText.contains("(")) {
-            baseText = baseText.substring(0, baseText.indexOf(" ("));
+        String initials = getInitials(playerName);
+        String tooltip = current.getToolTipText();
+
+        if (playerName.equals(name)) {
+            currentPlayerRow = row;
+            currentPlayerCol = col;
+
+            boolean inSecretPassageRoom = secretPassageRooms.contains(new Point(row, col));
+            secretPassageButton.setEnabled(inSecretPassageRoom);
         }
 
-        current.setText(baseText + " (" + playerName + ")");
+
+        if ("Hallway".equals(tooltip)) {
+            // Inline initials for hallway
+            String base = current.getText() != null ? current.getText().split(" ")[0] : "Hallway";
+            current.setText(base + " (" + initials + ")");
+        } else {
+            // Show initials below the room name using HTML
+            String existing = current.getText();
+            String roomName = existing.contains("<br>") ? existing.substring(0, existing.indexOf("<br>")) : existing;
+            String initialLine = existing.contains("<br>") ? existing.substring(existing.indexOf("<br>") + 4) : "";
+
+
+            Set<String> initialsSet = new HashSet<>();
+            for (String s : initialLine.replace("(", "").replace(")", "").split(", ")) {
+                if (!s.trim().isEmpty()) {
+                    initialsSet.add(s.trim());
+                }
+            }
+            initialsSet.add(initials);
+
+            String joinedInitials = String.join(", ", initialsSet);
+
+            current.setText("<html><center>" + roomName + "<br>(" + joinedInitials + ")</center></html>");
+        }
     }
+
+
+    private String getInitials(String characterName) {
+        // Convert names like "MissScarlet" to "MS", "ProfessorPlum" to "PP"
+        StringBuilder initials = new StringBuilder();
+        for (String part : characterName.split("(?=[A-Z])")) {  // Split camel case
+            if (!part.isEmpty()) initials.append(part.charAt(0));
+        }
+        return initials.toString().toUpperCase();
+    }
+
+
+
 
 }

@@ -9,6 +9,9 @@ public class GameBoard {
     private final Room[][] rooms;
     private final Set<Hallway> hallways;
     private final Map<String, PlayerState> playerPositions; // key = player name/ID
+    private final String solutionCharacter;
+    private final String solutionWeapon;
+    private final String solutionRoom;
 
     public GameBoard() {
         this.rooms = new Room[SIZE][SIZE];
@@ -16,7 +19,21 @@ public class GameBoard {
         this.playerPositions = new HashMap<>();
         initializeRooms();
         initializeHallways();
+
+        // Generate random hidden solution
+        this.solutionCharacter = pickRandom(new String[]{
+                "MissScarlet", "ColonelMustard", "MrsWhite",
+                "MrGreen", "MrsPeacock", "ProfessorPlum"
+        });
+        this.solutionWeapon = pickRandom(new String[]{
+                "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
+        });
+        this.solutionRoom = pickRandom(new String[]{
+                "Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room",
+                "Conservatory", "Ballroom", "Kitchen"
+        });
     }
+
 
 
     private void initializeRooms() {
@@ -61,15 +78,22 @@ public class GameBoard {
             }
         }
     }
-
     public boolean addPlayer(String playerId, String characterName, int row, int col) {
-        if (rooms[row][col].isOccupied()) return false;
+        Room room = getRoom(row, col);
+        if (room == null) return false;
+
+        // Restrict hallways to one player
+        if (room.getName().equals("Hallway") && room.isOccupied()) {
+            System.out.println("Hallway at (" + row + "," + col + ") is already occupied.");
+            return false;
+        }
+
         PlayerState player = new PlayerState(playerId, characterName, row, col);
         playerPositions.put(playerId, player);
-        rooms[row][col].setOccupied(true);
+        room.addOccupant(playerId);
+
         return true;
     }
-
 
     //TODO for debugging
     public boolean movePlayer(String playerId, int targetRow, int targetCol) {
@@ -89,26 +113,30 @@ public class GameBoard {
             return false;
         }
 
-        Room targetRoom = rooms[targetRow][targetCol];
+        Room currentRoom = getRoom(currentRow, currentCol);
+        Room targetRoom = getRoom(targetRow, targetCol);
+
         if (targetRoom == null) {
             System.out.println("Target room is null at: (" + targetRow + "," + targetCol + ")");
             return false;
         }
 
-        if (targetRoom.isOccupied()) {
-            System.out.println("Target room is occupied: " + targetRoom.getName());
+        // Restrict hallways to 1 occupant
+        if (targetRoom.getName().equals("Hallway") && targetRoom.isOccupied()) {
+            System.out.println("Target hallway is already occupied.");
             return false;
         }
 
-        rooms[currentRow][currentCol].setOccupied(false);
-        targetRoom.setOccupied(true);
+        // Move player
+        if (currentRoom != null) {
+            currentRoom.removeOccupant(playerId);
+        }
+        targetRoom.addOccupant(playerId);
         player.setPosition(targetRow, targetCol);
 
         System.out.println("Player moved successfully to: (" + targetRow + "," + targetCol + ")");
         return true;
     }
-
-
 
 
     public Room getRoom(String playerId) {
@@ -127,16 +155,36 @@ public class GameBoard {
     public void printBoardDebug() {
         for (int r = 0; r < SIZE; r++) {
             for (int c = 0; c < SIZE; c++) {
-                if (rooms[r][c] != null) {
-                    String occupant = rooms[r][c].isOccupied() ? "X" : " ";
-                    System.out.print("[" + rooms[r][c].getName().charAt(0) + occupant + "]");
+                Room room = rooms[r][c];
+                if (room != null) {
+                    Set<String> occupants = room.getOccupants();
+
+                    String tag;
+                    if (occupants.isEmpty()) {
+                        tag = "   ";
+                    } else {
+                        // Build a compact initials string (e.g. MS, PP)
+                        StringBuilder sb = new StringBuilder();
+                        for (String playerId : occupants) {
+                            String[] parts = playerId.split("(?=[A-Z])");
+                            for (String part : parts) {
+                                if (!part.isEmpty()) sb.append(part.charAt(0));
+                            }
+                            sb.append(',');
+                        }
+                        sb.setLength(Math.min(3, sb.length())); // Truncate to max 3 chars
+                        tag = sb.toString();
+                    }
+
+                    System.out.printf("[%s]", tag);
                 } else {
-                    System.out.print("[  ]");
+                    System.out.print("[   ]");
                 }
             }
             System.out.println();
         }
     }
+
 
     public boolean canMove(String playerId, String direction) {
         PlayerState player = playerPositions.get(playerId);
@@ -164,7 +212,7 @@ public class GameBoard {
         }
 
         // Check if there's a room or hallway
-        if (rooms[newRow][newCol] == null) {
+        if (getRoom(newRow, newCol) == null) {
             System.out.printf("No room at (%d,%d)%n", newRow, newCol);
             return false;
         }
@@ -176,15 +224,44 @@ public class GameBoard {
             return false;
         }
 
-        // Check occupancy
-        if (rooms[newRow][newCol].isOccupied()) {
-            System.out.printf("Target square (%d,%d) is occupied%n", newRow, newCol);
+        Room targetRoom = getRoom(newRow, newCol);
+        if (targetRoom.getName().equals("Hallway") && targetRoom.isOccupied()) {
+            System.out.printf("Target hallway (%d,%d) is occupied%n", newRow, newCol);
             return false;
         }
 
+
         return true;
     }
+    private String pickRandom(String[] array) {
+        return array[new Random().nextInt(array.length)];
+    }
 
+    public boolean isCorrectAccusation(String character, String weapon, String room) {
+        return solutionCharacter.equals(character) &&
+                solutionWeapon.equals(weapon) &&
+                solutionRoom.equals(room);
+    }
+
+    public Point getSecretPassageDestination(int row, int col) {
+        if (rooms[row][col] == null) return null;
+        String roomName = rooms[row][col].getName();
+
+        return switch (roomName) {
+            case "Study" -> new Point(4, 4); // Kitchen
+            case "Kitchen" -> new Point(0, 0); // Study
+            case "Conservatory" -> new Point(0, 4); // Lounge
+            case "Lounge" -> new Point(4, 0); // Conservatory
+            default -> null;
+        };
+    }
+
+    public Room getRoom(int row, int col) {
+        if (row >= 0 && row < SIZE && col >= 0 && col < SIZE) {
+            return rooms[row][col];
+        }
+        return null;
+    }
 }
 
 
