@@ -452,9 +452,23 @@ public class Client extends JFrame {
                 data[row][0] = card;
                 for (int col = 0; col < playersList.size(); col++) {
                     String player = playersList.get(col);
-                    boolean marked = detectiveTable.containsKey(card) &&
-                            detectiveTable.get(card).getOrDefault(player, false);
-                    data[row][col + 1] = marked ? "✔" : ""; // Default to checkmark if true, blank otherwise
+
+
+                    if (detectiveTable.containsKey(card) && detectiveTable.get(card).containsKey(player)) {
+                        Boolean value = detectiveTable.get(card).get(player);
+                        if (Boolean.TRUE.equals(value)) {
+                            data[row][col + 1] = "✔";
+                        } else if (Boolean.FALSE.equals(value)) {
+                            data[row][col + 1] = "✖";
+                        } else if (value == null) {
+                            data[row][col + 1] = "◯";
+                        }
+                    } else {
+                        data[row][col + 1] = ""; // truly no information
+                    }
+
+
+
                 }
             }
 
@@ -495,6 +509,8 @@ public class Client extends JFrame {
 
             JScrollPane scrollPane = new JScrollPane(table);
 
+            JDialog dialog = new JDialog(Client.this, "Detective Notepad", true);
+
             JButton saveButton = new JButton("Save and Close");
             saveButton.addActionListener(ev -> {
                 for (int row = 0; row < model.getRowCount(); row++) {
@@ -504,13 +520,26 @@ public class Client extends JFrame {
                         String mark = (String) model.getValueAt(row, col);
 
                         detectiveTable.putIfAbsent(card, new HashMap<>());
-                        detectiveTable.get(card).put(player, "✔".equals(mark)); // Only ✔ counts as true internally
+//                        detectiveTable.get(card).put(player, "✔".equals(mark));
+                        detectiveTable.putIfAbsent(card, new HashMap<>());
+                        if ("✔".equals(mark)) {
+                            detectiveTable.get(card).put(player, true);  // definitely has it
+                        } else if ("✖".equals(mark)) {
+                            detectiveTable.get(card).put(player, false); // definitely does NOT have it
+                        } else if ("◯".equals(mark)) {
+                            detectiveTable.get(card).put(player, null); // MAYBE (null means maybe)
+                        } else {
+                            detectiveTable.get(card).remove(player); // blank, remove entry
+                        }
+
                     }
                 }
                 JOptionPane.showMessageDialog(Client.this, "Detective Notes Saved!", "Saved", JOptionPane.INFORMATION_MESSAGE);
+
+                dialog.dispose();
             });
 
-            JDialog dialog = new JDialog(Client.this, "Detective Notepad", true);
+//            JDialog dialog = new JDialog(Client.this, "Detective Notepad", true);
             JPanel panel = new JPanel(new BorderLayout());
             panel.add(scrollPane, BorderLayout.CENTER);
             panel.add(saveButton, BorderLayout.SOUTH);
@@ -918,12 +947,6 @@ public class Client extends JFrame {
                 }
 
 
-//                if (message.startsWith("YOUR_CARDS")) {
-//                    String cardsList = message.substring("YOUR_CARDS".length()).trim();
-//                    myCards = cardsList; // Save the cards for later
-//                    JOptionPane.showMessageDialog(this, "Your cards are:\n" + cardsList,
-//                            "Your Cards", JOptionPane.INFORMATION_MESSAGE);
-//                }
                 if (message.startsWith("YOUR_CARDS")) {
                     String cardsList = message.substring("YOUR_CARDS".length()).trim();
                     myCards = cardsList; // Save the cards for later
