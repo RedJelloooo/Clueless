@@ -234,6 +234,13 @@ public class Server extends JFrame {
                         System.out.println("[" + characterName + "] Command received: " + clientCommand);
                         displayMessage("\n" + clientCommand);
 
+                        // Disable actions for eliminated players
+                        if (eliminated && !clientCommand.equals("WHERE")) {
+                            output.writeObject("ERROR You are eliminated. You can still observe the game.");
+                            output.flush();
+                            continue;
+                        }
+
                         // JOIN command
                         if (clientCommand.startsWith("JOIN")) {
                             this.characterName = clientCommand.split(" ")[1];
@@ -507,56 +514,69 @@ public class Server extends JFrame {
 
 
                         if (clientCommand.startsWith("ACCUSE")) {
+                            // Check if the player is already eliminated
                             if (eliminated) {
-                                output.writeObject("ERROR You are eliminated and cannot make accusations.");
+                                output.writeObject("ERROR: You are eliminated and cannot make accusations.");
                                 output.flush();
                                 continue;
                             }
 
+                            // Check if it is the player's turn
                             if (!characterName.equals(players.get(currentTurnIndex).characterName)) {
-                                output.writeObject("ERROR Not your turn.");
+                                output.writeObject("ERROR: It is not your turn.");
                                 output.flush();
                                 continue;
                             }
 
-
-                            String[] parts = clientCommand.split(" ");
+                            // Parse the accusation command
+                            String[] parts = clientCommand.split(" ", 4); // Split into 4 parts: ACCUSE, Suspect, Weapon, Room
                             if (parts.length < 4) {
-                                output.writeObject("ERROR Invalid accusation format. Use: ACCUSE <Suspect> <Weapon> <Room>");
+                                output.writeObject("ERROR: Invalid accusation format. Use: ACCUSE <Suspect> <Weapon> <Room>");
                                 output.flush();
                                 continue;
                             }
 
+                            // Extract accused character, weapon, and room from the command
                             String accusedCharacter = parts[1];
                             String accusedWeapon = parts[2];
                             String accusedRoom = parts[3];
 
+                            // Check if the accusation is correct
                             boolean correct = gameBoard.isCorrectAccusation(accusedCharacter, accusedWeapon, accusedRoom);
 
                             if (correct) {
-                                output.writeObject("You WON! Your accusation was correct: " + accusedCharacter + " with the " + accusedWeapon + " in the " + accusedRoom + ".");
+                                // If the accusation is correct, declare the player the winner
+                                output.writeObject("CONGRATULATIONS! Your accusation was correct: "
+                                        + accusedCharacter + " with the " + accusedWeapon + " in the " + accusedRoom);
                                 output.flush();
 
+                                // Broadcast the winner to all players
                                 broadcast(characterName + " has made a CORRECT accusation and won the game!");
                                 broadcast("GAME_OVER " + characterName);
                                 System.out.println(characterName + " WON the game!");
-                                // You could optionally shut down the server or mark the game as over here
+
+                                // End the game logic here, if necessary (e.g., shutting down the server or waiting for a replay)
                             } else {
+                                // Incorrect accusation, eliminate the player
                                 eliminated = true;
-                                output.writeObject("Your accusation was incorrect. You are now out of the game.");
+
+                                // Notify the player of their elimination
+                                output.writeObject("Your accusation was incorrect. You are now eliminated.");
                                 output.flush();
 
+                                // Broadcast to all players that this player has been removed
                                 broadcast(characterName + " made an incorrect accusation and is eliminated from the game.");
                                 System.out.println(characterName + " has been eliminated.");
-                                // Optional: disable further actions from this player
 
-                                broadcastPlayerPositions(); // Optional: useful to reflect position if needed
-                                checkForVictory();
+                                // Optional: If needed, update the UI or game state for all players
+                                broadcastPlayerPositions(); // Refresh player states or positions if necessary
+                                checkForVictory(); // Check if only one player remains (optional)
 
+                                // Proceed to the next turn
                                 nextTurn();
 
 
-                            }
+                        }
 
                             continue; // skip to next command
                         }
@@ -757,17 +777,32 @@ public class Server extends JFrame {
      * Advances the turn to the next eligible (non-eliminated) player.
      */
     private void nextTurn() {
-        //It keeps incrementing currentTurnIndex until it finds a player who is NOT eliminated.
-        //It stops if it loops all the way around (to avoid infinite loops if everyone is eliminated).
-        if (players.isEmpty()) return;
+        // Check if there are any players available
+        if (players.isEmpty()) {
+            System.out.println("No players available. Cannot proceed to the next turn.");
+            return;
+        }
 
+        // Save the starting index to detect a full loop (to avoid infinite loops)
         int startingIndex = currentTurnIndex;
+
+        // Iterate through players to find the next active (non-eliminated) player
         do {
             currentTurnIndex = (currentTurnIndex + 1) % players.size();
         } while (players.get(currentTurnIndex).eliminated && currentTurnIndex != startingIndex);
 
+        // Check if everyone is eliminated (we made a full loop)
+        if (players.get(currentTurnIndex).eliminated) {
+            // All players have been eliminated
+            System.out.println("All players are eliminated. Ending game...");
+            broadcast("GAME_OVER All players are eliminated. No winner!");
+            return;
+        }
+
+        // Notify the next turn's player
         notifyCurrentTurnPlayer();
     }
+
 
 
     /**
@@ -816,10 +851,6 @@ public class Server extends JFrame {
         }
         return null;
     }
-
-
-
-
 
 
 
