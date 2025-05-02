@@ -48,6 +48,11 @@ public class Server extends JFrame {
             "MrsPeacock", new int[]{4, 2},
             "ProfessorPlum", new int[]{0, 0}
     );
+    private Iterator<Player> disproveIterator;
+    private Player suggestingPlayer;
+    private List<String> currentSuggestionCards;
+    private boolean waitingForDisprove = false;
+
 
 
 
@@ -68,6 +73,60 @@ public class Server extends JFrame {
 
         tournamentScoreboard = new TournamentScoreboard();
     }
+
+    /**
+     * Sequentially prompts each player in clockwise order to disprove the current suggestion.
+     * This method uses disproveIterator, which contains the ordered list of players starting from
+     * the player immediately after the suggester. It checks each player's hand to see if they have any of
+     * the cards in currentSuggestionCards. The first player who has one or more matching cards is
+     * sent a DISPROVE_OPTIONS message and is expected to respond before the process continues.
+
+     * If a player cannot disprove, a message is broadcast, and the method recurses to check the next player.
+     * If no players can disprove (the iterator is exhausted), a message is sent to the suggester and they are
+     * prompted to make an accusation or end their turn.
+     */
+    private void proceedToNextDisprover() {
+        if (!disproveIterator.hasNext()) {
+            try {
+                broadcast("No one could disprove the suggestion.");
+                suggestingPlayer.output.writeObject("PROMPT_ACCUSATION_OR_END");
+                suggestingPlayer.output.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            waitingForDisprove = false;
+            return;
+        }
+
+        Player nextPlayer = disproveIterator.next();
+        PlayerState nextState = gameBoard.getPlayerState(nextPlayer.characterName);
+
+        if (nextState != null) {
+            List<String> matches = new ArrayList<>();
+            for (String card : nextState.getCards()) {
+                if (currentSuggestionCards.contains(card)) {
+                    matches.add(card);
+                }
+            }
+
+            if (!matches.isEmpty()) {
+                try {
+                    nextPlayer.output.writeObject("DISPROVE_OPTIONS " + String.join(",", matches));
+                    nextPlayer.output.flush();
+                    // Wait for their reply before continuing
+                    return;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                broadcast(nextPlayer.characterName + " cannot disprove the suggestion.");
+            }
+        }
+
+        // Continue to the next player
+        proceedToNextDisprover();
+    }
+
 
     /**
      * Starts the server, listening for incoming player connections on the designated port.
@@ -355,32 +414,23 @@ public class Server extends JFrame {
 
                                 List<String> suggestionCards = List.of(suspect, weapon, roomName);
 
-                                // Get the left player (the player before the suggester)
-                                Player leftPlayer = players.get((currentTurnIndex - 1 + players.size()) % players.size());
-                                PlayerState leftState = gameBoard.getPlayerState(leftPlayer.characterName);
+                                // Set server-wide disprove state
+                                Server.this.suggestingPlayer = players.get(currentTurnIndex);
+                                Server.this.currentSuggestionCards = suggestionCards;
+                                Server.this.waitingForDisprove = true;
 
-                                if (leftState != null) {
-                                    List<String> matches = new ArrayList<>();
-                                    for (String card : leftState.getCards()) {
-                                        if (suggestionCards.contains(card)) {
-                                            matches.add(card);
-                                        }
-                                    }
-
-                                    if (!matches.isEmpty()) {
-                                        // Send dropdown menu to the left player
-                                        leftPlayer.output.writeObject("DISPROVE_OPTIONS " + String.join(",", matches));
-                                        leftPlayer.output.flush();
-                                    } else {
-                                        broadcast("SUGGESTION_NOT_DISPROVED_BY_PREVIOUS"); // NEW LINE
-                                        broadcast(leftPlayer.characterName + " cannot disprove the suggestion.");
-                                        output.writeObject("PROMPT_ACCUSATION_OR_END");
-                                        output.flush();
-
-                                    }
-
-
+                                List<Player> disproveOrder = new ArrayList<>();
+                                int playerCount = players.size();
+                                int i = (currentTurnIndex + 1) % playerCount;
+                                while (i != currentTurnIndex) {
+                                    disproveOrder.add(players.get(i));
+                                    i = (i + 1) % playerCount;
                                 }
+                                Server.this.disproveIterator = disproveOrder.iterator();
+
+                                Server.this.proceedToNextDisprover();
+
+
 
 
                             } catch (Exception ex) {
@@ -438,21 +488,23 @@ public class Server extends JFrame {
                         }
 
                         if (clientCommand.startsWith("DISPROVE_SELECTED")) {
-                            String cardShown = clientCommand.split(" ", 2)[1];
+                            if (Server.this.waitingForDisprove) {
+                                String cardShown = clientCommand.split(" ", 2)[1];
 
-                            broadcast(characterName + " disproved the suggestion by showing a card.");
+                                broadcast(characterName + " disproved the suggestion by showing a card.");
 
-                            Player suggester = findPlayerByName(lastSuggester);
-                            if (suggester != null) {
-                                suggester.output.writeObject(characterName + " showed you: " + cardShown);
-                                suggester.output.flush();
+                                Player suggester = Server.this.suggestingPlayer;
+                                if (suggester != null) {
+                                    suggester.output.writeObject(characterName + " showed you: " + cardShown);
+                                    suggester.output.flush();
+                                    suggester.output.writeObject("PROMPT_ACCUSATION_OR_END");
+                                    suggester.output.flush();
+                                }
 
-                                // IMPORTANT: Give suggester the choice AFTER disproof
-                                suggester.output.writeObject("PROMPT_ACCUSATION_OR_END");
-                                suggester.output.flush();
+                                Server.this.waitingForDisprove = false;
                             }
-
                         }
+
 
                         if (clientCommand.startsWith("ACCUSE")) {
                             if (eliminated) {
