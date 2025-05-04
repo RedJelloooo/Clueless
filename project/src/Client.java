@@ -1,6 +1,10 @@
 import ui.Leaderboard;
 import util.Commands;
 
+import javax.sound.sampled.*;
+import javax.swing.*;
+import javax.swing.Timer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.io.File;
@@ -12,11 +16,6 @@ import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
-import javax.sound.sampled.*;
-import javax.swing.*;
-import javax.swing.Timer;
-import javax.swing.table.DefaultTableModel;
-import java.awt.Point;
 import java.util.List;
 
 
@@ -25,10 +24,10 @@ import java.util.List;
  * The Client class represents the player's interface for the Clue-Less game.
  * It handles the GUI setup, networking with the server, gameplay actions
  * (such as moving, suggesting, and accusing), and interaction with detective notes.
- *
+ * <p>
  * Players use this client to connect to a server, select characters,
  * make moves and suggestions, view their cards, and keep track of other players' actions.
- *
+ * <p>
  * Authors:
  *  - Brandon Cano (Server and Client Logic)
  *  - Alex Arand (GUI Implementation)
@@ -47,28 +46,22 @@ public class Client extends JFrame {
     private final String chatServer;
     private final Set<String> wordsGuessed = new HashSet<>();
     private String message = "";
-    private JComboBox<String> characterDropdown;
+    private final JComboBox<String> characterDropdown;
     private final Set<Point> secretPassageRooms = Set.of(
             new Point(0, 0), // Study
             new Point(0, 4), // Lounge
             new Point(4, 0), // Conservatory
             new Point(4, 4)  // Kitchen
     );
-    private int currentPlayerRow = -1;
-    private int currentPlayerCol = -1;
     private String myCards = "";
     private final java.util.List<String> detectiveNotes = new ArrayList<>();
     private final Map<String, Map<String, Boolean>> detectiveTable = new HashMap<>();
 
 
-
-
     // GUI components
-    private JPanel boardPanel;
-    private JLabel[][] roomLabels;
 
     private static final int BOARD_SIZE = 5;
-    private JLabel[][] boardLabels;
+    private final JLabel[][] boardLabels;
 
     private final JButton backToMainMenuFromSkinsButton;
     private final JButton exitFromGameToMainMenuButton;
@@ -80,11 +73,11 @@ public class Client extends JFrame {
     private final JButton chooseName;
     private final JButton displayRules;
     private JScrollPane scrollPane;
-    private JButton secretPassageButton;
+    private final JButton secretPassageButton;
     private final JButton makeSuggestionButton = new JButton("Make Suggestion");
     private final JButton makeAccusationButton = new JButton("Make Accusation");
-    private JButton myCardsButton;
-    private JButton detectiveNotePad;
+    private final JButton myCardsButton;
+    private final JButton detectiveNotePad;
 
 
     private final JLabel scrambleForCurrentRoundLabel;
@@ -245,28 +238,7 @@ public class Client extends JFrame {
 
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
-                String name = roomGridNames[row][col];
-                JLabel label = new JLabel(); // safe default
-
-
-                label.setOpaque(true);
-
-                if (name.equals("H")) {
-                    label = new JLabel(); // Hallway
-                    label.setOpaque(true);
-                    label.setBackground(Color.LIGHT_GRAY);
-                    label.setToolTipText("Hallway");
-                } else if (name.equals("")) {
-                    label = new JLabel(); // Invalid/unused
-                    label.setOpaque(true);
-                    label.setBackground(Color.BLACK);
-                } else {
-                    label = new JLabel(name, SwingConstants.CENTER); // Room
-                    label.setOpaque(true);
-                    label.setBackground(Color.CYAN);
-                    label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                    label.setToolTipText(name);
-                }
+                JLabel label = getJLabel(col, roomGridNames[row]);
 
 
                 boardLabels[row][col] = label;
@@ -511,33 +483,7 @@ public class Client extends JFrame {
 
             JDialog dialog = new JDialog(Client.this, "Detective Notepad", true);
 
-            JButton saveButton = new JButton("Save and Close");
-            saveButton.addActionListener(ev -> {
-                for (int row = 0; row < model.getRowCount(); row++) {
-                    String card = (String) model.getValueAt(row, 0);
-                    for (int col = 1; col < model.getColumnCount(); col++) {
-                        String player = columnNames[col];
-                        String mark = (String) model.getValueAt(row, col);
-
-                        detectiveTable.putIfAbsent(card, new HashMap<>());
-//                        detectiveTable.get(card).put(player, "✔".equals(mark));
-                        detectiveTable.putIfAbsent(card, new HashMap<>());
-                        if ("✔".equals(mark)) {
-                            detectiveTable.get(card).put(player, true);  // definitely has it
-                        } else if ("✖".equals(mark)) {
-                            detectiveTable.get(card).put(player, false); // definitely does NOT have it
-                        } else if ("◯".equals(mark)) {
-                            detectiveTable.get(card).put(player, null); // MAYBE (null means maybe)
-                        } else {
-                            detectiveTable.get(card).remove(player); // blank, remove entry
-                        }
-
-                    }
-                }
-                JOptionPane.showMessageDialog(Client.this, "Detective Notes Saved!", "Saved", JOptionPane.INFORMATION_MESSAGE);
-
-                dialog.dispose();
-            });
+            JButton saveButton = getJButton(model, columnNames, dialog);
 
 //            JDialog dialog = new JDialog(Client.this, "Detective Notepad", true);
             JPanel panel = new JPanel(new BorderLayout());
@@ -648,9 +594,7 @@ public class Client extends JFrame {
             myCardsButton.setVisible(true);
             detectiveNotePad.setVisible(true);
 
-            if (rules != null && rules.getIcon() instanceof ImageIcon imageIcon) {
-                int imageWidth = imageIcon.getIconWidth();
-                int imageHeight = imageIcon.getIconHeight();
+            if (rules != null && rules.getIcon() instanceof ImageIcon) {
 
                 int extraWidth = 10;
                 int extraHeight = 20;
@@ -727,6 +671,60 @@ public class Client extends JFrame {
         displayLeaderboard.addActionListener(e -> sendData(Commands.GET_LEADERBOARD.toString()));
     }
 
+    private JButton getJButton(DefaultTableModel model, String[] columnNames, JDialog dialog) {
+        JButton saveButton = new JButton("Save and Close");
+        saveButton.addActionListener(ev -> {
+            for (int row = 0; row < model.getRowCount(); row++) {
+                String card = (String) model.getValueAt(row, 0);
+                for (int col = 1; col < model.getColumnCount(); col++) {
+                    String player = columnNames[col];
+                    String mark = (String) model.getValueAt(row, col);
+
+                    detectiveTable.putIfAbsent(card, new HashMap<>());
+//                        detectiveTable.get(card).put(player, "✔".equals(mark));
+                    detectiveTable.putIfAbsent(card, new HashMap<>());
+                    switch (mark) {
+                        case "✔" -> detectiveTable.get(card).put(player, true);  // definitely has it
+                        case "✖" -> detectiveTable.get(card).put(player, false); // definitely does NOT have it
+                        case "◯" -> detectiveTable.get(card).put(player, null); // MAYBE (null means maybe)
+                        case null, default -> detectiveTable.get(card).remove(player); // blank, remove entry
+                    }
+
+                }
+            }
+            JOptionPane.showMessageDialog(Client.this, "Detective Notes Saved!", "Saved", JOptionPane.INFORMATION_MESSAGE);
+
+            dialog.dispose();
+        });
+        return saveButton;
+    }
+
+    private static JLabel getJLabel(int col, String[] roomGridNames) {
+        String name = roomGridNames[col];
+        JLabel label = new JLabel(); // safe default
+
+
+        label.setOpaque(true);
+
+        if (name.equals("H")) {
+            label = new JLabel(); // Hallway
+            label.setOpaque(true);
+            label.setBackground(Color.LIGHT_GRAY);
+            label.setToolTipText("Hallway");
+        } else if (name.isEmpty()) {
+            label = new JLabel(); // Invalid/unused
+            label.setOpaque(true);
+            label.setBackground(Color.BLACK);
+        } else {
+            label = new JLabel(name, SwingConstants.CENTER); // Room
+            label.setOpaque(true);
+            label.setBackground(Color.CYAN);
+            label.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            label.setToolTipText(name);
+        }
+        return label;
+    }
+
     /**
      * Establishes a socket connection to the server and sets up input/output streams.
      * Then listens for and processes messages from the server.
@@ -785,39 +783,6 @@ public class Client extends JFrame {
                             "New Suggestion Made",
                             JOptionPane.INFORMATION_MESSAGE);
                 }
-
-
-//                if (message.startsWith("You WON!")) {
-//                    JOptionPane.showMessageDialog(this, message, "🎉 You Won the Game!", JOptionPane.INFORMATION_MESSAGE);
-//
-//                    // Disable buttons because game is over
-//                    makeSuggestionButton.setEnabled(false);
-//                    makeAccusationButton.setEnabled(false);
-//                    secretPassageButton.setEnabled(false);
-//
-//
-//                    int response = JOptionPane.showConfirmDialog(
-//                            this,
-//                            "Would you like to play again?",
-//                            "Play Again?",
-//                            JOptionPane.YES_NO_OPTION
-//                    );
-//
-//                    if (response == JOptionPane.YES_OPTION) {
-//                        this.dispose(); // Close the current window
-//                        Client newClient = new Client(chatServer); // Create a fresh client
-//                        newClient.setTitle("Client - New Game");
-//                        newClient.setSize(800, 600);
-//                        newClient.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//                        newClient.setVisible(true);
-//                        newClient.setResizable(false);
-//                        newClient.setLocationRelativeTo(null);
-//                        newClient.runClient(); // Reconnect to server
-//                    } else {
-//                        sendData(Commands.PLAYER_LEFT.toString());
-//                        System.exit(0);
-//                    }
-//                }
 
                 if (message.startsWith("You WON!")) {
                     JOptionPane.showMessageDialog(this, message, "🎉 You Won the Game!", JOptionPane.INFORMATION_MESSAGE);
@@ -1033,7 +998,7 @@ public class Client extends JFrame {
                     });
                 }
             } catch (ClassNotFoundException classNotFoundException) {
-                classNotFoundException.printStackTrace();
+                System.out.println(classNotFoundException.getMessage());
             }
         } while (!message.equals("SERVER >>> TERMINATE"));
     }
@@ -1047,7 +1012,7 @@ public class Client extends JFrame {
             inputStream.close();
             client.close();
         } catch (IOException ioException) {
-            ioException.printStackTrace();
+            System.out.println(ioException.getMessage());
         }
     }
 
@@ -1061,7 +1026,7 @@ public class Client extends JFrame {
             outputStream.writeObject(message);
             outputStream.flush(); // flush data to output
         } catch (IOException ioException) {
-            ioException.printStackTrace();
+            System.out.println(ioException.getMessage());
         }
     }
 
@@ -1353,8 +1318,6 @@ public class Client extends JFrame {
         String tooltip = current.getToolTipText();
 
         if (playerName.equals(name)) {
-            currentPlayerRow = row;
-            currentPlayerCol = col;
 
             boolean inSecretPassageRoom = secretPassageRooms.contains(new Point(row, col));
             secretPassageButton.setEnabled(inSecretPassageRoom);
@@ -1401,36 +1364,4 @@ public class Client extends JFrame {
         return initials.toString().toUpperCase();
     }
 
-    /**
-     * Determines if a given card is a suspect.
-     *
-     * @param card the name of the card
-     * @return true if the card is a suspect, false otherwise
-     */
-    private boolean isSuspect(String card) {
-        return Arrays.asList("MissScarlet", "ColonelMustard", "MrsWhite", "MrGreen", "MrsPeacock", "ProfessorPlum")
-                .contains(card);
-    }
-
-    /**
-     * Determines if a given card is a weapon.
-     *
-     * @param card the name of the card
-     * @return true if the card is a weapon, false otherwise
-     */
-    private boolean isWeapon(String card) {
-        return Arrays.asList("Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench")
-                .contains(card);
-    }
-
-    /**
-     * Determines if a given card is a room.
-     *
-     * @param card the name of the card
-     * @return true if the card is a room, false otherwise
-     */
-    private boolean isRoom(String card) {
-        return Arrays.asList("Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room", "Conservatory", "Ballroom", "Kitchen")
-                .contains(card);
-    }
 }

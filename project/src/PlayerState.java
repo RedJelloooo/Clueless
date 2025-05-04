@@ -3,21 +3,19 @@ import java.util.ArrayList;
 
 /**
  * The PlayerState class represents the current status of a player in the Clue-Less game.
- *
+ * <p>
  * It tracks the player's ID, character name, position on the board (row and column),
  * the cards the player holds, and whether the player was recently moved due to a suggestion.
- *
+ * <p>
  * * Authors:
  *  * - Albert Rojas
  *
  */
 public class PlayerState {
-    private final String playerId;
     private final String characterName;
     private int row;
     private int col;
     private final List<String> cards;
-    private boolean recentlyMovedBySuggestion;
 
     /**
      * Constructs a PlayerState with the specified player ID, character name, and starting position.
@@ -28,20 +26,12 @@ public class PlayerState {
      * @param col the initial column position on the board
      */
     public PlayerState(String playerId, String characterName, int row, int col) {
-        this.playerId = playerId;
         this.characterName = characterName;
         this.row = row;
         this.col = col;
         this.cards = new ArrayList<>();
-        this.recentlyMovedBySuggestion = false;
+        boolean recentlyMovedBySuggestion = false;
     }
-
-    /**
-     * Gets the unique player ID.
-     *
-     * @return the player's ID
-     */
-    public String getPlayerId() { return playerId; }
 
     /**
      * Gets the name of the character assigned to the player.
@@ -91,17 +81,4 @@ public class PlayerState {
      */
     public void addCard(String card) { cards.add(card); }
 
-    /**
-     * Checks whether the player was recently moved into a room due to another player's suggestion.
-     *
-     * @return true if the player was moved by a suggestion, false otherwise
-     */
-    public boolean wasMovedBySuggestion() { return recentlyMovedBySuggestion; }
-
-    /**
-     * Sets whether the player has been moved into a room by a suggestion.
-     *
-     * @param flag true if moved by a suggestion, false otherwise
-     */
-    public void setMovedBySuggestion(boolean flag) { recentlyMovedBySuggestion = flag; }
 }

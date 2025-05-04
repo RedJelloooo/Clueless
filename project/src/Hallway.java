@@ -3,11 +3,11 @@ import java.util.Objects;
 /**
  * The Hallway class represents a connection between two adjacent rooms
  * on the Clue-Less game board. A hallway allows players to move between rooms.
- *
+ * <p>
  * Hallways are uniquely identified by the two rooms (by their row and column coordinates) they connect.
- *
+ * <p>
  * Two Hallways are considered equal if they connect the same pair of rooms, regardless of the order.
- *
+ * <p>
  *  *  Authors:
  *  *   - Albert Rojas
  */
@@ -52,7 +52,7 @@ public class Hallway {
 
     /**
      * Determines if two Hallway objects are equal.
-     *
+     * <p>
      * Two Hallways are equal if they connect the same two rooms.
      *
      * @param o the object to compare to

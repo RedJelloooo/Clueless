@@ -15,10 +15,10 @@ public class TournamentScoreboard {
     /**
      * this inner class sets the player's information
      */
-    private class PlayerInformation {
-        String name;
-        int score;
-        int round;
+    private static class PlayerInformation {
+        final String name;
+        final int score;
+        final int round;
 
         public PlayerInformation(String name, int score, int round) {
             this.name = name;

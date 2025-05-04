@@ -3,25 +3,22 @@ import util.Score;
 import util.TournamentScoreboard;
 import util.WordFile;
 
-import java.util.*;
-
-
 import javax.swing.*;
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.awt.Point;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * The Server class manages the Clue-Less game server.
- *
+ * <p>
  * It accepts client connections, handles player actions (joining, moving, suggesting, accusing),
  * manages the game board state, deals cards, enforces turns, and broadcasts updates to all clients.
- *
+ * <p>
  * Each connected player runs on a separate thread for simultaneous gameplay.
  */
 public class Server extends JFrame {
@@ -38,8 +35,6 @@ public class Server extends JFrame {
     private final TournamentScoreboard tournamentScoreboard;
     private String leaderboard = "";
     private int currentTurnIndex = 0; // index into players list
-    private boolean gameStarted = false;
-    private String lastSuggester = null;
     private static final Map<String, int[]> startingPositions = Map.of(
             "MissScarlet", new int[]{4, 0},
             "ColonelMustard", new int[]{0, 2},
@@ -82,7 +77,7 @@ public class Server extends JFrame {
      * sent a DISPROVE_OPTIONS message and is expected to respond before the process continues.
 
      * If a player cannot disprove, a message is broadcast, and the method recurses to check the next player.
-     * If no players can disprove (the iterator is exhausted), a message is sent to the suggester and they are
+     * If no players can disprove (the iterator is exhausted), a message is sent to the suggester, and they are
      * prompted to make an accusation or end their turn.
      */
     private void proceedToNextDisprover() {
@@ -92,7 +87,7 @@ public class Server extends JFrame {
                 suggestingPlayer.output.writeObject("PROMPT_ACCUSATION_OR_END");
                 suggestingPlayer.output.flush();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
             waitingForDisprove = false;
             return;
@@ -116,7 +111,7 @@ public class Server extends JFrame {
                     // Wait for their reply before continuing
                     return;
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println(e.getMessage());
                 }
             } else {
                 broadcast(nextPlayer.characterName + " cannot disprove the suggestion.");
@@ -144,7 +139,7 @@ public class Server extends JFrame {
                 closeServer();
             }
         } catch (IOException ioException) {
-            ioException.printStackTrace();
+            System.out.println(ioException.getMessage());
         }
     }
 
@@ -158,14 +153,10 @@ public class Server extends JFrame {
             Socket connection = server.accept();
             displayMessage("\nConnection received from: " + connection.getInetAddress().getHostName());
 
-            try {
-                Player newPlayer = new Player(connection);
-                players.add(newPlayer);
-                playerThreads.execute(newPlayer);
+            Player newPlayer = new Player(connection);
+            players.add(newPlayer);
+            playerThreads.execute(newPlayer);
 
-            } catch (ClassNotFoundException interruptedException) {
-                interruptedException.printStackTrace();
-            }
         }
     }
 
@@ -180,14 +171,12 @@ public class Server extends JFrame {
 
     /**
      * Closes the server socket, releasing network resources.
-     *
-     * @throws IOException if an error occurs while closing the server
      */
-    private void closeServer() throws IOException {
+    private void closeServer() {
         try {
             server.close();
         } catch (IOException ioException) {
-            ioException.printStackTrace();
+            System.out.println(ioException.getMessage());
         }
     }
 
@@ -207,7 +196,7 @@ public class Server extends JFrame {
          * constructor for the player
          * @param socket - socket to connect ot the server
          */
-        public Player(Socket socket) throws ClassNotFoundException {
+        public Player(Socket socket) {
             connection = socket;
 
             try {
@@ -336,7 +325,7 @@ public class Server extends JFrame {
                                 output.flush();
                             } catch (Exception ex) {
                                 System.err.println("Error in MOVE_DIRECTION block:");
-                                ex.printStackTrace();
+                                System.out.println(ex.getMessage());
                                 output.writeObject("MOVED false (Server error: " + ex.getMessage() + ")");
                                 output.flush();
                             }
@@ -388,8 +377,6 @@ public class Server extends JFrame {
                                 System.out.println(characterName + " made a suggestion: " +
                                         suspect + " with the " + weapon + " in the " + currentRoom.getName());
 
-                                lastSuggester = characterName;
-
                                 // Move suspect (character) to current room
                                 PlayerState suspectPlayer = gameBoard.getPlayerState(suspect);
                                 if (suspectPlayer != null) {
@@ -434,7 +421,7 @@ public class Server extends JFrame {
 
 
                             } catch (Exception ex) {
-                                ex.printStackTrace();
+                                System.out.println(ex.getMessage());
                                 output.writeObject("ERROR Could not process suggestion.");
                                 output.flush();
                             }
@@ -606,18 +593,18 @@ public class Server extends JFrame {
 
                     } catch (Exception inner) {
                         System.err.println("Error while processing client command:");
-                        inner.printStackTrace();
+                        System.out.println(inner.getMessage());
                         try {
                             output.writeObject("ERROR " + inner.getMessage());
                             output.flush();
                         } catch (IOException io) {
-                            io.printStackTrace();
+                            System.out.println(io.getMessage());
                         }
                     }
                 }
             } catch (Exception outer) {
                 System.err.println("Fatal error in client thread:");
-                outer.printStackTrace();
+                System.out.println(outer.getMessage());
             } finally {
                 try {
                     playerCount--;
@@ -625,7 +612,7 @@ public class Server extends JFrame {
                     displayMessage("\nThere are currently " + playerCount + " players\n");
                     connection.close();
                 } catch (IOException ioException) {
-                    ioException.printStackTrace();
+                    System.out.println(ioException.getMessage());
                 }
             }
 
@@ -678,7 +665,7 @@ public class Server extends JFrame {
                 p.output.writeObject(sb.toString());
                 p.output.flush();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         }
     }
@@ -731,10 +718,9 @@ public class Server extends JFrame {
                     p.output.flush();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         }
-        gameStarted = true;
         notifyCurrentTurnPlayer();
 
     }
@@ -749,7 +735,7 @@ public class Server extends JFrame {
             currentPlayer.output.writeObject("YOUR_TURN");
             currentPlayer.output.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
     }
 
@@ -786,12 +772,12 @@ public class Server extends JFrame {
         }
 
         if (activePlayers.size() == 1) {
-            Player winner = activePlayers.get(0);
+            Player winner = activePlayers.getFirst();
             try {
                 winner.output.writeObject("You WON! Everyone else has been eliminated.");
                 winner.output.flush();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
 
             broadcast(winner.characterName + " has WON the game because all other players were eliminated!");
@@ -800,27 +786,6 @@ public class Server extends JFrame {
 
         }
     }
-
-
-    /**
-     * Finds and returns a Player object by their character name.
-     *
-     * @param name the character name
-     * @return the Player object, or null if not found
-     */
-    private Player findPlayerByName(String name) {
-        for (Player p : players) {
-            if (p.characterName.equals(name)) {
-                return p;
-            }
-        }
-        return null;
-    }
-
-
-
-
-
 
 
 }

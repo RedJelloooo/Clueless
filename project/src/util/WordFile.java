@@ -31,7 +31,7 @@ public class WordFile {
 
         } catch (FileNotFoundException e) { // if the file is not found an error is thrown
             System.out.println("File not found: words_alpha.txt");
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
 
         return list;

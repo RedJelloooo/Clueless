@@ -5,9 +5,9 @@ import java.awt.Point;
  * The GameBoard class models the game environment for the Clue-Less game.
  * It manages the 5x5 grid of rooms and hallways, tracks player positions,
  * handles player movement, manages secret passages, and verifies suggestions and accusations.
- *
+ * <p>
  * It also randomly selects a hidden solution (character, weapon, and room) at game initialization.
- *
+ * <p>
  *  * Authors:
  *  *  - Albert Rojas
  */
@@ -64,7 +64,7 @@ public class GameBoard {
         for (int row = 0; row < SIZE; row++) {
             for (int col = 0; col < SIZE; col++) {
                 String name = names[row][col];
-                if (!name.equals("")) {
+                if (!name.isEmpty()) {
                     if (name.equals("H")) {
                         rooms[row][col] = new Room("Hallway", row, col);
                     } else {
@@ -220,15 +220,7 @@ public class GameBoard {
                         tag = "   ";
                     } else {
                         // Build a compact initials string (e.g. MS, PP)
-                        StringBuilder sb = new StringBuilder();
-                        for (String playerId : occupants) {
-                            String[] parts = playerId.split("(?=[A-Z])");
-                            for (String part : parts) {
-                                if (!part.isEmpty()) sb.append(part.charAt(0));
-                            }
-                            sb.append(',');
-                        }
-                        sb.setLength(Math.min(3, sb.length())); // Truncate to max 3 chars
+                        StringBuilder sb = getStringBuilder(occupants);
                         tag = sb.toString();
                     }
 
@@ -239,6 +231,19 @@ public class GameBoard {
             }
             System.out.println();
         }
+    }
+
+    private static StringBuilder getStringBuilder(Set<String> occupants) {
+        StringBuilder sb = new StringBuilder();
+        for (String playerId : occupants) {
+            String[] parts = playerId.split("(?=[A-Z])");
+            for (String part : parts) {
+                if (!part.isEmpty()) sb.append(part.charAt(0));
+            }
+            sb.append(',');
+        }
+        sb.setLength(Math.min(3, sb.length())); // Truncate to max 3 chars
+        return sb;
     }
 
     /**

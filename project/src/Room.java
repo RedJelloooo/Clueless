@@ -3,11 +3,11 @@ import java.util.Set;
 
 /**
  * The Room class represents a room or hallway on the Clue-Less game board.
- *
+ * <p>
  * Each Room has a name, a position (row and column), and a set of player IDs representing occupants.
- *
+ * <p>
  * Rooms can be normal rooms (e.g., "Study", "Kitchen") or hallways connecting rooms.
- *
+ * <p>
  * * Authors:
  *  * - Albert Rojas
  *

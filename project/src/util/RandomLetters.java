@@ -1,7 +1,5 @@
 package util;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Random;
 
 /**
@@ -42,20 +40,4 @@ public class RandomLetters {
         return String.valueOf(returnLetters);
     }
 
-    /**
-     * This takes in a character array of letters.txt and shuffles it
-     * @param letters - input character array
-     * @return - arrayList of shuffled letters.txt
-     */
-    public static ArrayList<Character> letterShuffler(char[] letters) {
-
-        ArrayList<Character> shuffled = new ArrayList<>(); // creates arraylist to return
-        for(char x: letters){
-            shuffled.add(x); // adds each element to the new list
-        }
-
-        Collections.shuffle(shuffled); // shuffles the letters.txt
-
-        return  shuffled;
-    }
 }
