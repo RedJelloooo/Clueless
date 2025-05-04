@@ -208,10 +208,6 @@ public class Client extends JFrame {
         });
 
 
-
-        System.out.println("Sending move command: MOVE_DIRECTION UP");
-
-
         // Add Action Listeners
         upButton.addActionListener(e -> {
             System.out.println("Sending move command: MOVE_DIRECTION UP");
