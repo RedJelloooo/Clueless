@@ -116,7 +116,7 @@ public class GameBoard {
             return false;
         }
 
-        PlayerState player = new PlayerState(playerId, characterName, row, col);
+        PlayerState player = new PlayerState(characterName, row, col);
         playerPositions.put(playerId, player);
         room.addOccupant(playerId);
 

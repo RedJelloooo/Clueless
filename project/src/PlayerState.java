@@ -20,17 +20,15 @@ public class PlayerState {
     /**
      * Constructs a PlayerState with the specified player ID, character name, and starting position.
      *
-     * @param playerId the unique identifier for the player
      * @param characterName the character assigned to the player
      * @param row the initial row position on the board
      * @param col the initial column position on the board
      */
-    public PlayerState(String playerId, String characterName, int row, int col) {
+    public PlayerState(String characterName, int row, int col) {
         this.characterName = characterName;
         this.row = row;
         this.col = col;
         this.cards = new ArrayList<>();
-        boolean recentlyMovedBySuggestion = false;
     }
 
     /**
