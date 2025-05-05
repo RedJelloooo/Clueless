@@ -46,6 +46,7 @@ public class Client extends JFrame {
     private final Set<String> wordsGuessed = new HashSet<>();
     private String message = "";
     private JComboBox<String> characterDropdown;
+    private boolean isEliminated = false;
     private final Set<Point> secretPassageRooms = Set.of(
             new Point(0, 0), // Study
             new Point(0, 4), // Lounge
@@ -206,10 +207,6 @@ public class Client extends JFrame {
         });
 
 
-
-        System.out.println("Sending move command: MOVE_DIRECTION UP");
-
-
         // Add Action Listeners
         upButton.addActionListener(e -> {
             System.out.println("Sending move command: MOVE_DIRECTION UP");
@@ -335,43 +332,7 @@ public class Client extends JFrame {
         });
 
         makeSuggestionButton.addActionListener(e -> {
-            String[] suspects = {
-                    "MissScarlet", "ColonelMustard", "MrsWhite",
-                    "MrGreen", "MrsPeacock", "ProfessorPlum"
-            };
-
-            String[] weapons = {
-                    "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
-            };
-
-            JComboBox<String> suspectDropdown = new JComboBox<>(suspects);
-            JComboBox<String> weaponDropdown = new JComboBox<>(weapons);
-            JButton notesButton = new JButton("Detective Notepad");
-
-            // Action for the Detective Notes button
-            notesButton.addActionListener(event -> detectiveNotePad.doClick());
-
-            JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5)); // 3 rows, 2 columns, nice spacing
-            panel.add(new JLabel("Suspect:"));
-            panel.add(suspectDropdown);
-            panel.add(new JLabel("Weapon:"));
-            panel.add(weaponDropdown);
-            panel.add(new JLabel("")); // Empty cell for alignment
-            panel.add(notesButton);
-
-            int result = JOptionPane.showConfirmDialog(
-                    this,
-                    panel,
-                    "Make a Suggestion",
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.PLAIN_MESSAGE
-            );
-
-            if (result == JOptionPane.OK_OPTION) {
-                String suspect = (String) suspectDropdown.getSelectedItem();
-                String weapon = (String) weaponDropdown.getSelectedItem();
-                sendData("SUGGEST " + suspect + " " + weapon);
-            }
+            this.playerMakesSuggestion();
         });
 
 
@@ -725,6 +686,46 @@ public class Client extends JFrame {
         displayLeaderboard.addActionListener(e -> sendData(Commands.GET_LEADERBOARD.toString()));
     }
 
+    private void playerMakesSuggestion() {
+        String[] suspects = {
+                "MissScarlet", "ColonelMustard", "MrsWhite",
+                "MrGreen", "MrsPeacock", "ProfessorPlum"
+        };
+
+        String[] weapons = {
+                "Candlestick", "Knife", "LeadPipe", "Revolver", "Rope", "Wrench"
+        };
+
+        JComboBox<String> suspectDropdown = new JComboBox<>(suspects);
+        JComboBox<String> weaponDropdown = new JComboBox<>(weapons);
+        JButton notesButton = new JButton("Detective Notepad");
+
+        // Action for the Detective Notes button
+        notesButton.addActionListener(event -> detectiveNotePad.doClick());
+
+        JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5)); // 3 rows, 2 columns, nice spacing
+        panel.add(new JLabel("Suspect:"));
+        panel.add(suspectDropdown);
+        panel.add(new JLabel("Weapon:"));
+        panel.add(weaponDropdown);
+        panel.add(new JLabel("")); // Empty cell for alignment
+        panel.add(notesButton);
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                panel,
+                "Make a Suggestion",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            String suspect = (String) suspectDropdown.getSelectedItem();
+            String weapon = (String) weaponDropdown.getSelectedItem();
+            sendData("SUGGEST " + suspect + " " + weapon);
+        }
+    }
+
     /**
      * Establishes a socket connection to the server and sets up input/output streams.
      * Then listens for and processes messages from the server.
@@ -849,7 +850,9 @@ public class Client extends JFrame {
                 }
 
 
-
+                if (message.startsWith("ERROR You are eliminated.")) {
+                    handleElimination();
+                }
 
                 if (message.startsWith("Your accusation was incorrect")) {
                     JOptionPane.showMessageDialog(this, message, "❌ Incorrect Accusation", JOptionPane.WARNING_MESSAGE);
@@ -1048,6 +1051,11 @@ public class Client extends JFrame {
                             sendData("DISPROVE_SELECTED " + selectedCard);
                         }
                     });
+                }
+
+                if (message.endsWith("secret passage")) {
+                    // prompt for immediate suggestion if using secret passage to move player
+                    this.playerMakesSuggestion();
                 }
             } catch (ClassNotFoundException classNotFoundException) {
                 classNotFoundException.printStackTrace();
@@ -1449,5 +1457,30 @@ public class Client extends JFrame {
     private boolean isRoom(String card) {
         return Arrays.asList("Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room", "Conservatory", "Ballroom", "Kitchen")
                 .contains(card);
+    }
+
+    private void handleElimination() {
+        isEliminated = true;
+
+        disableGameActions();
+
+        // Notify the player they’ve been eliminated
+        JOptionPane.showMessageDialog(this,
+                "You have been eliminated. You can still observe the game.",
+                "Eliminated",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void disableGameActions() {
+        makeSuggestionButton.setEnabled(false);
+        makeAccusationButton.setEnabled(false);
+
+        if (secretPassageButton != null) {
+            secretPassageButton.setEnabled(false);
+        }
+
+        if (detectiveNotePad != null) {
+            detectiveNotePad.setEnabled(true);
+        }
     }
 }
