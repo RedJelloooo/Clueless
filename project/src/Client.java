@@ -48,6 +48,7 @@ public class Client extends JFrame {
     private final Set<String> wordsGuessed = new HashSet<>();
     private String message = "";
     private JComboBox<String> characterDropdown;
+    private boolean isEliminated = false;
     private final Set<Point> secretPassageRooms = Set.of(
             new Point(0, 0), // Study
             new Point(0, 4), // Lounge
@@ -831,7 +832,9 @@ public class Client extends JFrame {
                 }
 
 
-
+                if (message.startsWith("ERROR You are eliminated.")) {
+                    handleElimination();
+                }
 
                 if (message.startsWith("Your accusation was incorrect")) {
                     JOptionPane.showMessageDialog(this, message, "❌ Incorrect Accusation", JOptionPane.WARNING_MESSAGE);
@@ -1432,5 +1435,30 @@ public class Client extends JFrame {
     private boolean isRoom(String card) {
         return Arrays.asList("Study", "Hall", "Lounge", "Library", "Billiard Room", "Dining Room", "Conservatory", "Ballroom", "Kitchen")
                 .contains(card);
+    }
+
+    private void handleElimination() {
+        isEliminated = true;
+
+        disableGameActions();
+
+        // Notify the player they’ve been eliminated
+        JOptionPane.showMessageDialog(this,
+                "You have been eliminated. You can still observe the game.",
+                "Eliminated",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void disableGameActions() {
+        makeSuggestionButton.setEnabled(false);
+        makeAccusationButton.setEnabled(false);
+
+        if (secretPassageButton != null) {
+            secretPassageButton.setEnabled(false);
+        }
+
+        if (detectiveNotePad != null) {
+            detectiveNotePad.setEnabled(true);
+        }
     }
 }
