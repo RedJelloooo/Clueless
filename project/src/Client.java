@@ -1,6 +1,3 @@
-import ui.Leaderboard;
-import util.Commands;
-
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.io.File;
@@ -12,12 +9,13 @@ import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.List;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
-import java.awt.Point;
-import java.util.List;
+import ui.Leaderboard;
+import util.Commands;
 
 
 
@@ -333,7 +331,7 @@ public class Client extends JFrame {
             sendData("JOIN " + selected);
             myCardsButton.setVisible(true);
             detectiveNotePad.setVisible(true);
-           boardPanel.setVisible(true); //
+            boardPanel.setVisible(true); //
         });
 
         makeSuggestionButton.addActionListener(e -> {
@@ -747,6 +745,27 @@ public class Client extends JFrame {
         }
     }
 
+    private void startNewGame() {
+        String[] options = {"Yes", "No"};
+        int choice = JOptionPane.showOptionDialog(
+                null,
+                "Would you like to join a new game:",
+                "Options",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+
+        if (choice == 0) { // Joining a new game
+            System.out.println("Joining a new game");
+        } else if (choice == 1) { // Quitting server
+            System.out.println("Leaving game");
+            sendData(Commands.PLAYER_LEFT.toString());
+            System.exit(0);
+        }
+    }
     /**
      * Processes incoming messages from the server and updates the client GUI and state accordingly.
      *
@@ -825,9 +844,8 @@ public class Client extends JFrame {
                     makeSuggestionButton.setEnabled(false);
                     makeAccusationButton.setEnabled(false);
                     secretPassageButton.setEnabled(false);
-
-                    sendData(Commands.PLAYER_LEFT.toString());
-                    System.exit(0);
+                    startNewGame();
+                    return;
                 }
 
 
@@ -856,12 +874,11 @@ public class Client extends JFrame {
                 if (message.startsWith("GAME_OVER")) {
                     String winner = message.substring("GAME_OVER".length()).trim();
                     JOptionPane.showMessageDialog(this,
-                            "🏆 " + winner + " has won the game! 🏆\nThe game will now close.",
+                            "🏆 " + winner + " has won the game! 🏆.",
                             "Game Over",
                             JOptionPane.INFORMATION_MESSAGE);
-
-                    sendData(Commands.PLAYER_LEFT.toString()); // Politely tell server you're leaving
-                    System.exit(0); // Exit the client
+                    startNewGame();
+                    return;
                 }
 
 
@@ -1157,9 +1174,9 @@ public class Client extends JFrame {
 //        rules.setVisible(false);
         myCardsButton.setVisible(true);
         detectiveNotePad.setVisible(true);
-        scrollPane.setVisible(false);
+        // scrollPane.setVisible(false);
         displayRules.setVisible(true);
-        menu.setVisible(true);
+        // menu.setVisible(true);
         backToMainMenuFromSkinsButton.setVisible(false);
         exitFromGameToMainMenuButton.setVisible(false);
         exitFromGameToMainMenuButton.setVisible(false);
@@ -1179,10 +1196,10 @@ public class Client extends JFrame {
         chooseName.setVisible(true);
         textField.setVisible(false);
         enterName.setVisible(false);
-        gameLogo.setVisible(false);
-        gameLogo.setVisible(false);
+        // gameLogo.setVisible(false);
+        // gameLogo.setVisible(false);
         display.setVisible(true);
-        if (scrollPane != null) scrollPane.setVisible(false);
+        // if (scrollPane != null) scrollPane.setVisible(false);
     }
 
     /**
@@ -1193,7 +1210,7 @@ public class Client extends JFrame {
         add(makeAccusationButton);
         add(displayRules);
         add(displayLeaderboard);
-        add(gameLogo);
+        // add(gameLogo);
         add(exitTheApplicationButton);
         add(enterName);
         add(chooseName);
@@ -1215,7 +1232,7 @@ public class Client extends JFrame {
         add(myCardsButton);
         add(detectiveNotePad);
         add(makeSuggestionButton);
-        add(menu);
+        // add(menu);
         add(display);
 
         makeSuggestionButton.setEnabled(false);
@@ -1224,9 +1241,9 @@ public class Client extends JFrame {
 
         mainMenuInitialize();
 
-        if (scrollPane != null) {
-            add(scrollPane); // must be last to control visibility correctly
-        }
+        // if (scrollPane != null) {
+        //     add(scrollPane); // must be last to control visibility correctly
+        // }
     }
 
     /**
@@ -1236,7 +1253,7 @@ public class Client extends JFrame {
 
 
 
-        menu.setBounds(-10, -50, 800, 600); //-10, -50, 800, 600
+        // menu.setBounds(-10, -50, 800, 600); //-10, -50, 800, 600
         makeSuggestionButton.setBounds(150, 20, 150, 25); //New Suggestion button
         makeAccusationButton.setBounds(600, 404, 150, 25);//600, 372, 150, 25
         backToMainMenuFromSkinsButton.setBounds(600, 400, 150, 50);
@@ -1259,8 +1276,8 @@ public class Client extends JFrame {
         textField.setBounds(250, 350, 400, 50);
         currentName.setBounds(600, 350, 150, 50);
 //        chooseName.setBounds(600, 307, 150, 25);
-        gameLogo.setBounds(0, -100, 800, 800);
-        gameLogo.setBounds(0, -100, 800, 800);
+        // gameLogo.setBounds(0, -100, 800, 800);
+        // gameLogo.setBounds(0, -100, 800, 800);
         display.setBounds(0, 0, 800, 600);
         display.setBounds(0, 0, 800, 600);
     }

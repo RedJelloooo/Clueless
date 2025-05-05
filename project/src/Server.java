@@ -1,20 +1,16 @@
+import java.awt.BorderLayout;
+import java.awt.Point;
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import javax.swing.*;
 import util.Commands;
 import util.Score;
 import util.TournamentScoreboard;
 import util.WordFile;
-
-import java.util.*;
-
-
-import javax.swing.*;
-import java.awt.BorderLayout;
-import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.awt.Point;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * The Server class manages the Clue-Less game server.
@@ -26,16 +22,16 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 public class Server extends JFrame {
 
-    private final GameBoard gameBoard = new GameBoard();
+    private GameBoard gameBoard = new GameBoard();
     private int playerCount = 0;
     private boolean cardsDealt = false;
-    private final static int MAX_PLAYERS = 16; //can possibly get rid of this
-    private final JTextArea displayArea;
+    private static int MAX_PLAYERS = 16; //can possibly get rid of this
+    private JTextArea displayArea;
     private ServerSocket server;
-    private final List<Player> players = new ArrayList<>();
-    private final ExecutorService playerThreads;
-    private final String[] scrambles;
-    private final TournamentScoreboard tournamentScoreboard;
+    private List<Player> players = new ArrayList<>();
+    private ExecutorService playerThreads;
+    private String[] scrambles;
+    private TournamentScoreboard tournamentScoreboard;
     private String leaderboard = "";
     private int currentTurnIndex = 0; // index into players list
     private boolean gameStarted = false;
@@ -228,7 +224,7 @@ public class Server extends JFrame {
                 output.writeObject(scrambles);
                 output.flush();
 
-                while (!clientCommand.equals("Quit")) {
+                while (!clientCommand.equals(Commands.PLAYER_LEFT.toString())) {
                     try {
                         clientCommand = (String) input.readObject();
                         System.out.println("[" + characterName + "] Command received: " + clientCommand);
@@ -537,6 +533,7 @@ public class Server extends JFrame {
                                 output.writeObject("You WON! Your accusation was correct: " + accusedCharacter + " with the " + accusedWeapon + " in the " + accusedRoom + ".");
                                 output.flush();
 
+                                resetGame();
                                 broadcast(characterName + " has made a CORRECT accusation and won the game!");
                                 broadcast("GAME_OVER " + characterName);
                                 System.out.println(characterName + " WON the game!");
@@ -794,6 +791,7 @@ public class Server extends JFrame {
                 e.printStackTrace();
             }
 
+            resetGame();
             broadcast(winner.characterName + " has WON the game because all other players were eliminated!");
             broadcast("GAME_OVER " + winner.characterName);
             System.out.println(winner.characterName + " has WON by default!");
@@ -801,6 +799,10 @@ public class Server extends JFrame {
         }
     }
 
+    private void resetGame() {
+        gameBoard = new GameBoard();
+//
+    }
 
     /**
      * Finds and returns a Player object by their character name.
