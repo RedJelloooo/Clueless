@@ -413,10 +413,6 @@ public class Server extends JFrame {
 
                                 }
 
-                                String msg = characterName + " suggests: " + suspect + " with the " + weapon + " in the " + currentRoom.getName();
-                                output.writeObject(msg); // Send confirmation to suggester
-                                output.flush();
-
                                 broadcast(characterName + " suggests: " + suspect + " with the " + weapon + " in the " + roomName);
 
                                 List<String> suggestionCards = List.of(suspect, weapon, roomName);
